@@ -1,0 +1,14 @@
+mode: set
+archetype/app/shared/infrastructure/fuego/server.go:32.58,40.45 3 1
+archetype/app/shared/infrastructure/fuego/server.go:40.45,42.3 1 0
+archetype/app/shared/infrastructure/fuego/server.go:44.2,44.20 1 1
+archetype/app/shared/infrastructure/fuego/server.go:49.35,56.12 5 1
+archetype/app/shared/infrastructure/fuego/server.go:56.12,62.57 5 1
+archetype/app/shared/infrastructure/fuego/server.go:62.57,64.4 1 0
+archetype/app/shared/infrastructure/fuego/server.go:65.3,65.11 1 0
+archetype/app/shared/infrastructure/fuego/server.go:68.2,69.71 2 1
+archetype/app/shared/infrastructure/fuego/server.go:69.71,71.3 1 0
+archetype/app/shared/infrastructure/fuego/server.go:73.2,73.12 1 1
+archetype/app/shared/infrastructure/fuego/server.go:76.38,84.16 2 1
+archetype/app/shared/infrastructure/fuego/server.go:84.16,86.3 1 0
+archetype/app/shared/infrastructure/fuego/server.go:88.2,93.12 2 1
