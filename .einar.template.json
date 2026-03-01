@@ -32,8 +32,8 @@
                 "destination_file": ".gitignore"
             },
             {
-                "source_file": "embed.go",
-                "destination_file": "embed.go"
+                "source_file": "main.go",
+                "destination_file": "main.go"
             },
             {
                 "source_file": "README.md",

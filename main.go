@@ -1,6 +1,8 @@
 package archetype
 
-import _ "embed"
+import (
+	_ "embed"
+)
 
 //go:embed .version
 var Version string
