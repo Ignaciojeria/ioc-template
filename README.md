@@ -127,3 +127,29 @@ go run ./scripts/gen-from-template
 ```
 
 The mapping between source files and generated markdown is defined in `scripts/gen-skills.config.yaml`. To add a new component, add an entry to the config and re-run the script.
+
+## 🤖 Installing the einar-ioc Skill (Cursor)
+
+The `skills/einar-ioc/` folder contains a Cursor skill that enables **vibe-coding** without Einar CLI: the AI follows the template patterns to scaffold, wire, and modify code.
+
+**Using npx skills** (recommended):
+
+```bash
+# Project-level (current repo only)
+npx skills add Ignaciojeria/ioc-template --skill einar-ioc
+
+# User-level (all your projects)
+npx skills add Ignaciojeria/ioc-template --skill einar-ioc -g
+```
+
+**Manual install** (if npx is not available):
+
+```bash
+# Project-level
+mkdir -p .cursor/skills && cp -r skills/einar-ioc .cursor/skills/
+
+# User-level
+cp -r skills/einar-ioc ~/.cursor/skills/
+```
+
+After installing, Cursor will discover the skill automatically. Use it when working on einar-ioc projects—the agent will replicate Einar CLI behavior without running the CLI.
