@@ -10,7 +10,7 @@ This project follows a Modular / Hexagonal Architecture (Ports and Adapters) pat
 
 - `cmd/api`: The application entry point. Loads dependencies and starts the system.
 - `app/shared`: Common infrastructure, configuration, cross-cutting concerns (e.g., HTTP server, OpenTelemetry, logging).
-- `app/adapter/in`: Inbound adapters (Controllers, PubSub consumers, GRPC handlers) that trigger business logic.
+- `app/adapter/in`: Inbound adapters (Controllers, EventBus consumers, GRPC handlers) that trigger business logic.
 - `app/adapter/out`: Outbound adapters (Database repositories, HTTP clients, Publishers) to interact with external systems.
 - `app/usecase`: Core business logic. Pure Go code, independent of external frameworks.
 
@@ -36,11 +36,11 @@ import "github.com/Ignaciojeria/ioc"
 var _ = ioc.Register(NewMyService)
 
 type MyService struct {
-	db Database // Dependency
+	db *sqlx.DB // Dependency
 }
 
 // 2. Define constructor with dependencies as parameters
-func NewMyService(db Database) (*MyService, error) {
+func NewMyService(db *sqlx.DB) (*MyService, error) {
 	return &MyService{db: db}, nil
 }
 ```
@@ -52,42 +52,55 @@ You can use the `einar` CLI to incrementally add features and components to your
 ### Installations
 Install core infrastructure modules:
 - `einar install fuego` (Adds Fuego HTTP Server)
-- `einar install postgresql` (Adds GORM PostgreSQL connection)
-- `einar install gcp-pubsub` (Adds Google Cloud PubSub)
+- `einar install postgresql` (Adds PostgreSQL connection via `sqlx` and `golang-migrate`)
+- `einar install gcp-pubsub` (Adds Google Cloud PubSub with CloudEvents agnostic adapter)
 
 ### Generators
 Scaffold standard components (these will be automatically wired into the IoC container):
 - `einar generate usecase getUser`
 - `einar generate get-controller getUser`
 - `einar generate post-controller createUser`
+- `einar generate postgres-repository user` (Scaffolds a hexagonal outbound repository with raw SQL)
+- `einar generate pubsub-consumer procesar_pedido` (Scaffolds an agnostic CloudEvent listener)
 
-*Note: Einar CLI uses AST parsing to dynamically update your `main.go` with blank imports (`_ "path/to/package"`) when generating or installing components. You do rarely need to modify `main.go` manually.*
+*Note: Einar CLI uses AST parsing to dynamically update your `main.go` with blank imports (`_ "path/to/package"`) when generating or installing components. You rarely need to modify `cmd/api/main.go` manually.*
 
 ## 🧪 Testing
 
-The IoC container is designed to facilitate 100% unit test coverage. Since constructors explicitly define dependencies as parameters, you can easily instantiate them in tests by passing mocks or stubs directly—without needing to boot the full IoC container.
+The IoC container is designed to facilitate high unit test coverage. Since constructors explicitly define dependencies as parameters, you can easily instantiate them in tests by passing mocks or stubs directly.
 
-```go
-func TestNewMyService(t *testing.T) {
-	mockDB := NewMockDatabase()
-	service, err := NewMyService(mockDB)
-    // assert...
-}
+**Integration Testing:**
+This template incorporates `testcontainers-go`. When running PostgreSQL tests, a real Docker container is automatically spun up to validate that:
+1. SQL migrations are applied correctly.
+2. Raw SQL queries work against a real engine.
+
+```bash
+# Run all tests (including integration tests with Docker)
+go test -v ./...
 ```
 
 ## 🗄️ Database & Migrations
 
-If your project uses a relational database like PostgreSQL, follow these strict rules to ensure maintainability and separation of concerns:
+We prioritize **Raw SQL** and **Explicit Migrations** over ORM magic to ensure 100% control over the schema and performance.
 
 **Rule for AI Agents & Developers:**
-1. **Never use ORM Auto-Migrations (e.g., `gorm.AutoMigrate`) for production models.** 
-2. **Schema Management:** All table creation, alterations, and schema definitions MUST reside in pure `.sql` files within the `migrations/` directory at the root of the project.
-3. **Execution:** Migrations are embedded into the Go binary using `//go:embed` and should be executed on application startup using a standard migrator like `golang-migrate/migrate`.
-4. **Data Access:** GORM is used internally for data access (e.g., INSERTS, UPDATES) and mapping. For complex queries or high-performance reads, write Raw SQL or consider generating type-safe SQL with `sqlc`. Do NOT pollute Domain Entities with heavy ORM-specific tags if possible.
+1. **Never use ORMs with Auto-Migrations.** 
+2. **Schema Management:** All table changes MUST reside in pure `.sql` files within the `app/shared/infrastructure/postgresql/migrations/` directory.
+3. **Execution:** Migrations are embedded into the Go binary using `//go:embed` and executed on application startup using `golang-migrate`.
+4. **Data Access:** Use `sqlx` for data access. Map rows directly to structs using `db:"column_name"` tags.
+5. **Testing:** Use `go-sqlmock` for unit testing repositories and `testcontainers` for integration testing.
+
+## 📡 Messaging & PubSub (CloudEvents)
+
+To avoid vendor lock-in, all messaging components follow the **CloudEvents (CNCF)** standard.
+
+- **Subscriber Strategy**: Uses an agnostic `eventbus.Subscriber` interface. 
+- **Adapters**: The GCP PubSub adapter handles PULL from the cloud and provides a PUSH fallback via HTTP (WebHooks) for local debugging.
+- **Payloads**: All consumers receive `cloudevents.Event`, keeping the business logic independent of the broker (PubSub, NATS, Kafka).
 
 ## 📄 Environment Configuration
 
-The application expects variables to be managed via `.env` files for local development. Configuration is processed in `app/shared/configuration/conf.go`.
+The application manages variables via a single connection string or specific envs. Configuration is processed in `app/shared/configuration/`.
 
-- Default configurations use Struct Tags (e.g., `` env:"PORT" envDefault:"8080" ``).
-- Use `configuration.NewConf` as a dependency if your component needs to access environment variables. Never read from `os.Getenv` directly within business logic.
+- Default configurations use Struct Tags (e.g., `` env:"DATABASE_URL" envDefault:"postgres://..." ``).
+- Use `configuration.Conf` as a dependency. Never read from `os.Getenv` directly within logic.
