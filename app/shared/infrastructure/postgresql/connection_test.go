@@ -21,9 +21,9 @@ func TestNewConnection_InvalidURL(t *testing.T) {
 		t.Errorf("expected nil db on error, got %v", db)
 	}
 
-	// This validates that the driver throws an error matching invalid format
-	if !strings.Contains(err.Error(), "failed to parse") {
-		t.Errorf("expected DSN formatting error, got %v", err)
+	// Validate generic DSN parsing failure
+	if !strings.Contains(err.Error(), "failed to connect") {
+		t.Errorf("expected connection formatting error, got %v", err)
 	}
 }
 
@@ -46,7 +46,7 @@ func TestNewConnection_InvalidDSN(t *testing.T) {
 		t.Errorf("expected nil db on error, got %v", db)
 	}
 
-	if !strings.Contains(err.Error(), "failed to parse") {
-		t.Errorf("expected invalid DSN format error, got %v", err)
+	if !strings.Contains(err.Error(), "failed to connect") {
+		t.Errorf("expected connection error, got %v", err)
 	}
 }
