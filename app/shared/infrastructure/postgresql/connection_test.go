@@ -82,6 +82,22 @@ func TestNewConnection_InvalidURL(t *testing.T) {
 	}
 }
 
+func TestNewConnection_MalformedURL(t *testing.T) {
+	// A URL that fails url.Parse
+	conf := configuration.Conf{
+		// Starting with a colon but no scheme often confuses parser
+		DATABASE_URL: "postgres://user:pass@host:port/%-invalid",
+	}
+
+	db, err := NewConnection(conf)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if db != nil {
+		t.Errorf("expected nil db, got %v", db)
+	}
+}
+
 func TestNewConnection_EmptyURL(t *testing.T) {
 	conf := configuration.Conf{
 		DATABASE_URL: "",

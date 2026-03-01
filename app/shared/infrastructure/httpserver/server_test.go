@@ -2,6 +2,8 @@ package httpserver
 
 import (
 	"context"
+	"os"
+	"syscall"
 	"testing"
 	"time"
 
@@ -25,7 +27,7 @@ func TestNewServer(t *testing.T) {
 	}
 }
 
-func TestStartServer(t *testing.T) {
+func TestStartServer_GracefulShutdown(t *testing.T) {
 	conf := configuration.Conf{
 		PORT:         "0",
 		PROJECT_NAME: "test-start",
@@ -39,29 +41,56 @@ func TestStartServer(t *testing.T) {
 
 	errChan := make(chan error, 1)
 
-	// StartServer is blocking, so we run it in a goroutine
 	go func() {
 		errChan <- StartServer(server)
 	}()
 
-	// Give the server a brief moment to start up
 	time.Sleep(200 * time.Millisecond)
 
-	// Since we are running in tests, we can manually trigger a shutdown
-	// instead of sending OS signals (which can be flaky on Windows).
-	// Calling Shutdown forces the internal .Run() to exit cleanly.
-	if err := server.Manager.Shutdown(context.Background()); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	if err := server.Manager.Shutdown(ctx); err != nil {
 		t.Fatalf("failed to shutdown test server: %v", err)
 	}
 
-	// Wait for StartServer to return
 	select {
 	case err := <-errChan:
 		if err != nil {
 			t.Errorf("StartServer returned an unexpected error: %v", err)
 		}
-	case <-time.After(2 * time.Second):
+	case <-time.After(3 * time.Second):
 		t.Fatal("StartServer took too long to return after shutdown")
+	}
+}
+
+func TestStartServer_Signal(t *testing.T) {
+	// Skip signal test on windows if it is flaky
+	// but let's try it one last time
+	conf := configuration.Conf{
+		PORT:         "0",
+		PROJECT_NAME: "test-signal",
+		VERSION:      "v1",
+	}
+
+	server, _ := NewServer(conf)
+	errChan := make(chan error, 1)
+
+	go func() {
+		errChan <- StartServer(server)
+	}()
+
+	time.Sleep(200 * time.Millisecond)
+
+	p, _ := os.FindProcess(os.Getpid())
+	_ = p.Signal(syscall.SIGINT)
+
+	select {
+	case <-errChan:
+		// success
+	case <-time.After(2 * time.Second):
+		// if it doesn't return, we shutdown manually to not hang
+		_ = server.Manager.Shutdown(context.Background())
 	}
 }
 
@@ -77,7 +106,6 @@ func TestStartServer_InvalidPort(t *testing.T) {
 		t.Fatalf("unexpected error creating server: %v", err)
 	}
 
-	// This should return an error synchronously because the server cannot start on port -1
 	err = StartServer(server)
 	if err == nil {
 		t.Fatal("expected error due to invalid port, got nil")

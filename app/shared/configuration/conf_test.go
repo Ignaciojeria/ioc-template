@@ -56,3 +56,12 @@ func TestNewConf_CustomEnvs(t *testing.T) {
 		t.Errorf("expected version 2.0, got %s", conf.VERSION)
 	}
 }
+func TestParse_Error(t *testing.T) {
+	type BadStruct struct {
+		Func func() `env:"BAD"`
+	}
+	_, err := Parse[BadStruct]()
+	if err == nil {
+		t.Error("expected error parsing struct with function field, got nil")
+	}
+}
