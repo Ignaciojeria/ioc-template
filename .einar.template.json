@@ -476,6 +476,63 @@
                     "literal_replacements": []
                 }
             ]
+        },
+        {
+            "kind": "publisher",
+            "adapter_type": "outbound",
+            "command": "einar generate publisher ${publisher_name}",
+            "depends_on": [
+                "gcp-pubsub"
+            ],
+            "files": [
+                {
+                    "source_file": "app/adapter/out/eventbus/publisher.go",
+                    "destination_dir": "app/adapter/out/eventbus",
+                    "ioc_discovery": true,
+                    "replace_holders": [
+                        {
+                            "kind": "PascalCase",
+                            "name": "NewTemplatePublisher",
+                            "append_at_start": "New",
+                            "append_at_end": "Publisher"
+                        },
+                        {
+                            "kind": "PascalCase",
+                            "name": "TemplatePublisher",
+                            "append_at_start": "",
+                            "append_at_end": "Publisher"
+                        }
+                    ],
+                    "literal_replacements": []
+                },
+                {
+                    "source_file": "app/adapter/out/eventbus/publisher_test.go",
+                    "destination_dir": "app/adapter/out/eventbus",
+                    "ioc_discovery": true,
+                    "append_at_end": "_test",
+                    "replace_holders": [
+                        {
+                            "kind": "PascalCase",
+                            "name": "NewTemplatePublisher",
+                            "append_at_start": "New",
+                            "append_at_end": "Publisher"
+                        },
+                        {
+                            "kind": "PascalCase",
+                            "name": "TestNewTemplatePublisher",
+                            "append_at_start": "TestNew",
+                            "append_at_end": "Publisher"
+                        },
+                        {
+                            "kind": "PascalCase",
+                            "name": "TemplatePublisher",
+                            "append_at_start": "",
+                            "append_at_end": "Publisher"
+                        }
+                    ],
+                    "literal_replacements": []
+                }
+            ]
         }
     ],
     "installation_commands": [
