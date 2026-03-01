@@ -19,6 +19,7 @@ type Output struct {
 	Description string   `yaml:"description"`
 	Preamble    string   `yaml:"preamble"`
 	Sources     []string `yaml:"sources"`
+	TestSources []string `yaml:"test_sources"`
 	Structure   bool     `yaml:"structure"`
 }
 
@@ -90,6 +91,26 @@ func buildMarkdown(rootDir string, out Output) (string, error) {
 		sb.WriteString(fmt.Sprintf("```%s\n", lang))
 		sb.WriteString(strings.TrimRight(string(data), "\n"))
 		sb.WriteString("\n```\n")
+	}
+
+	if len(out.TestSources) > 0 {
+		sb.WriteString("\n---\n\n## Unit tests\n\n")
+		sb.WriteString("When creating a new component, generate tests following this pattern:\n\n")
+		for i, src := range out.TestSources {
+			srcPath := filepath.Join(rootDir, src)
+			data, err := os.ReadFile(srcPath)
+			if err != nil {
+				return "", fmt.Errorf("reading test %s: %w", src, err)
+			}
+			if i > 0 {
+				sb.WriteString("\n---\n\n")
+			}
+			sb.WriteString(fmt.Sprintf("### %s\n\n", src))
+			lang := codeBlockLang(src)
+			sb.WriteString(fmt.Sprintf("```%s\n", lang))
+			sb.WriteString(strings.TrimRight(string(data), "\n"))
+			sb.WriteString("\n```\n")
+		}
 	}
 
 	return sb.String(), nil

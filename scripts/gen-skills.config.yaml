@@ -45,26 +45,37 @@ outputs:
     sources:
       - app/shared/configuration/conf.go
       - app/shared/configuration/parse.go
+    test_sources:
+      - app/shared/configuration/conf_test.go
+      - app/shared/configuration/parse_test.go
 
   - md: httpserver.md
     description: "HTTP server setup with Fuego framework and healthcheck"
     sources:
       - app/shared/infrastructure/httpserver/server.go
+    test_sources:
+      - app/shared/infrastructure/httpserver/server_test.go
 
   - md: request-logger-middleware.md
     description: "HTTP request logger middleware"
     sources:
       - app/shared/infrastructure/httpserver/middleware/request_logger.go
+    test_sources:
+      - app/shared/infrastructure/httpserver/middleware/request_logger_test.go
 
   - md: observability.md
     description: "OpenTelemetry observability setup"
     sources:
       - app/shared/infrastructure/observability/observability.go
+    test_sources:
+      - app/shared/infrastructure/observability/observability_test.go
 
   - md: postgresql-connection.md
     description: "PostgreSQL connection with embedded migrations via sqlx and golang-migrate"
     sources:
       - app/shared/infrastructure/postgresql/connection.go
+    test_sources:
+      - app/shared/infrastructure/postgresql/connection_test.go
 
   - md: postgresql-migrations.md
     description: "Example migrations - naming convention and up/down pattern (golang-migrate)"
@@ -84,6 +95,10 @@ outputs:
       - app/shared/infrastructure/eventbus/gcp_client.go
       - app/shared/infrastructure/eventbus/gcp_publisher.go
       - app/shared/infrastructure/eventbus/gcp_subscriber.go
+    test_sources:
+      - app/shared/infrastructure/eventbus/gcp_client_test.go
+      - app/shared/infrastructure/eventbus/gcp_publisher_test.go
+      - app/shared/infrastructure/eventbus/gcp_subscriber_test.go
 
   - md: eventbus-nats.md
     description: "NATS client, publisher, and subscriber implementation"
@@ -91,16 +106,22 @@ outputs:
       - app/shared/infrastructure/eventbus/nats_client.go
       - app/shared/infrastructure/eventbus/nats_publisher.go
       - app/shared/infrastructure/eventbus/nats_subscriber.go
+    test_sources:
+      - app/shared/infrastructure/eventbus/nats_client_test.go
 
   - md: consumer.md
     description: "Inbound EventBus consumer pattern with CloudEvents"
     sources:
       - app/adapter/in/eventbus/consumer.go
+    test_sources:
+      - app/adapter/in/eventbus/consumer_test.go
 
   - md: publisher.md
     description: "Outbound EventBus publisher adapter"
     sources:
       - app/adapter/out/eventbus/publisher.go
+    test_sources:
+      - app/adapter/out/eventbus/publisher_test.go
 
   - md: fuegoapi-controllers.md
     description: "REST API controllers scaffolded with Fuego (GET, POST, PUT, PATCH, DELETE)"
@@ -110,8 +131,16 @@ outputs:
       - app/adapter/in/fuegoapi/put.go
       - app/adapter/in/fuegoapi/patch.go
       - app/adapter/in/fuegoapi/delete.go
+    test_sources:
+      - app/adapter/in/fuegoapi/get_test.go
+      - app/adapter/in/fuegoapi/post_test.go
+      - app/adapter/in/fuegoapi/put_test.go
+      - app/adapter/in/fuegoapi/patch_test.go
+      - app/adapter/in/fuegoapi/delete_test.go
 
   - md: postgres-repository.md
     description: "PostgreSQL repository pattern with sqlx and go-sqlmock"
     sources:
       - app/adapter/out/postgres/postgres_repository.go
+    test_sources:
+      - app/adapter/out/postgres/postgres_repository_test.go
