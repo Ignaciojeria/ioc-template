@@ -338,6 +338,69 @@
                     "literal_replacements": []
                 }
             ]
+        },
+        {
+            "kind": "postgres-repository",
+            "adapter_type": "outbound",
+            "command": "einar generate postgres-repository ${operation_name}",
+            "depends_on": [
+                "postgresql"
+            ],
+            "files": [
+                {
+                    "source_file": "app/adapter/out/postgres/postgres_repository.go",
+                    "destination_dir": "app/adapter/out/postgres",
+                    "ioc_discovery": true,
+                    "replace_holders": [
+                        {
+                            "kind": "PascalCase",
+                            "name": "NewTemplateRepository",
+                            "append_at_start": "New",
+                            "append_at_end": "Repository"
+                        },
+                        {
+                            "kind": "PascalCase",
+                            "name": "TemplateRepository",
+                            "append_at_start": "",
+                            "append_at_end": "Repository"
+                        },
+                        {
+                            "kind": "PascalCase",
+                            "name": "TemplateStruct",
+                            "append_at_start": "",
+                            "append_at_end": ""
+                        }
+                    ],
+                    "literal_replacements": []
+                },
+                {
+                    "source_file": "app/adapter/out/postgres/postgres_repository_test.go",
+                    "destination_dir": "app/adapter/out/postgres",
+                    "ioc_discovery": true,
+                    "append_at_end": "_test",
+                    "replace_holders": [
+                        {
+                            "kind": "PascalCase",
+                            "name": "NewTemplateRepository",
+                            "append_at_start": "New",
+                            "append_at_end": "Repository"
+                        },
+                        {
+                            "kind": "PascalCase",
+                            "name": "TestNewTemplateRepository",
+                            "append_at_start": "TestNew",
+                            "append_at_end": "Repository"
+                        },
+                        {
+                            "kind": "PascalCase",
+                            "name": "TemplateRepository",
+                            "append_at_start": "",
+                            "append_at_end": "Repository"
+                        }
+                    ],
+                    "literal_replacements": []
+                }
+            ]
         }
     ],
     "installation_commands": [
