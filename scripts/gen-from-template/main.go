@@ -17,6 +17,7 @@ type Config struct {
 type Output struct {
 	MD          string   `yaml:"md"`
 	Description string   `yaml:"description"`
+	Preamble    string   `yaml:"preamble"`
 	Sources     []string `yaml:"sources"`
 	Structure   bool     `yaml:"structure"`
 }
@@ -61,6 +62,9 @@ func buildMarkdown(rootDir string, out Output) (string, error) {
 
 	sb.WriteString(fmt.Sprintf("# %s\n\n", strings.TrimSuffix(out.MD, ".md")))
 	sb.WriteString(fmt.Sprintf("> %s\n\n", out.Description))
+	if out.Preamble != "" {
+		sb.WriteString(strings.TrimSpace(out.Preamble) + "\n\n")
+	}
 
 	if out.Structure {
 		tree := buildDirTree(rootDir)
@@ -97,6 +101,8 @@ func codeBlockLang(path string) string {
 		return "sql"
 	case ".yaml", ".yml":
 		return "yaml"
+	case ".json":
+		return "json"
 	default:
 		return "go"
 	}

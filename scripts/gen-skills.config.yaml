@@ -1,6 +1,13 @@
 output_dir: skills/einar-ioc/rules
 
 outputs:
+  - md: einar-template.md
+    description: "Einar CLI config - defines how generators create and rename .go files"
+    preamble: |
+      **How it works:** For each controller, repository, consumer, publisher, etc., Einar CLI generates a **new file** in the structure indicated by `destination_dir`, with a name derived from the template's `source_file` and the operation/entity name. The content is built from the template with `replace_holders` applied (PascalCase/SnakeCase). `ioc_discovery: true` means the CLI adds the package to blank imports in `cmd/api/main.go`.
+    sources:
+      - .einar.template.json
+
   - md: structure.md
     description: "Project directory structure"
     structure: true
@@ -12,6 +19,24 @@ outputs:
 
   - md: main.md
     description: "Application entry point - loads IoC dependencies"
+    preamble: |
+      **Blank imports:** Each package that registers with `ioc.Register` MUST be imported in `cmd/api/main.go` via `_ "archetype/path/to/package"` (not in the root `main.go`, which is package archetype and only embeds Version). When adding a new component, the agent must add its blank import so the package loads and the IoC receives the constructor. Example:
+
+      ```go
+      import (
+          "log"
+          "os"
+          "strings"
+          "archetype"
+          _ "archetype/app/adapter/in/fuegoapi"
+          _ "archetype/app/adapter/in/eventbus"
+          _ "archetype/app/adapter/out/postgres"
+          _ "archetype/app/shared/infrastructure/httpserver"
+          _ "archetype/app/shared/infrastructure/postgresql"
+          _ "archetype/app/shared/infrastructure/observability"
+          "github.com/Ignaciojeria/ioc"
+      )
+      ```
     sources:
       - cmd/api/main.go
 
