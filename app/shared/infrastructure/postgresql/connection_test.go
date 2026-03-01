@@ -9,6 +9,7 @@ import (
 
 	"archetype/app/shared/configuration"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -111,10 +112,41 @@ func TestNewConnection_EmptyURL(t *testing.T) {
 }
 
 func TestInternalRunMigrations_Error(t *testing.T) {
-	// Passing an empty embed.FS should trigger iofs.New error because "migrations" folder won't exist
-	err := internalRunMigrations(nil, "test", embed.FS{})
+	// Passing an empty embed.FS should trigger iofs.New error because "migrations" folder won't exist.
+	// We need a valid DB connection (internalRunMigrations returns early if db is nil).
+	ctx := context.Background()
+	postgresContainer, err := postgres.Run(ctx,
+		"postgres:15-alpine",
+		postgres.WithDatabase("testdb"),
+		postgres.WithUsername("postgres"),
+		postgres.WithPassword("postgres"),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(5*time.Second),
+		),
+	)
+	if err != nil {
+		t.Fatalf("failed to start postgres container: %s", err)
+	}
+	defer func() {
+		_ = postgresContainer.Terminate(ctx)
+	}()
+
+	connStr, err := postgresContainer.ConnectionString(ctx, "sslmode=disable")
+	if err != nil {
+		t.Fatalf("failed to get connection string: %s", err)
+	}
+
+	db, err := sqlx.Connect("pgx", connStr)
+	if err != nil {
+		t.Fatalf("failed to connect: %s", err)
+	}
+	defer db.Close()
+
+	err = internalRunMigrations(db, "testdb", embed.FS{})
 	if err == nil {
-		t.Fatal("expected error with empty embed.FS, got nil")
+		t.Fatal("expected error with empty embed.FS (iofs.New fails when migrations folder does not exist), got nil")
 	}
 }
 
