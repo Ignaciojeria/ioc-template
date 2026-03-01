@@ -75,6 +75,16 @@ func TestNewMyService(t *testing.T) {
 }
 ```
 
+## 🗄️ Database & Migrations
+
+If your project uses a relational database like PostgreSQL, follow these strict rules to ensure maintainability and separation of concerns:
+
+**Rule for AI Agents & Developers:**
+1. **Never use ORM Auto-Migrations (e.g., `gorm.AutoMigrate`) for production models.** 
+2. **Schema Management:** All table creation, alterations, and schema definitions MUST reside in pure `.sql` files within the `migrations/` directory at the root of the project.
+3. **Execution:** Migrations are embedded into the Go binary using `//go:embed` and should be executed on application startup using a standard migrator like `golang-migrate/migrate`.
+4. **Data Access:** GORM is used internally for data access (e.g., INSERTS, UPDATES) and mapping. For complex queries or high-performance reads, write Raw SQL or consider generating type-safe SQL with `sqlc`. Do NOT pollute Domain Entities with heavy ORM-specific tags if possible.
+
 ## 📄 Environment Configuration
 
 The application expects variables to be managed via `.env` files for local development. Configuration is processed in `app/shared/configuration/conf.go`.
