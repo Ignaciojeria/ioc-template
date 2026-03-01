@@ -626,6 +626,39 @@
                 "go.opentelemetry.io/otel/trace",
                 "go.opentelemetry.io/otel/trace/noop"
             ]
+        },
+        {
+            "name": "nats-in-memory",
+            "depends_on": [
+                "observability"
+            ],
+            "files": [
+                {
+                    "source_file": "app/shared/infrastructure/eventbus/strategy.go",
+                    "destination_dir": "app/shared/infrastructure/eventbus",
+                    "ioc_discovery": false
+                },
+                {
+                    "source_file": "app/shared/infrastructure/eventbus/nats_client.go",
+                    "destination_dir": "app/shared/infrastructure/eventbus",
+                    "ioc_discovery": true
+                },
+                {
+                    "source_file": "app/shared/infrastructure/eventbus/nats_publisher.go",
+                    "destination_dir": "app/shared/infrastructure/eventbus",
+                    "ioc_discovery": true
+                },
+                {
+                    "source_file": "app/shared/infrastructure/eventbus/nats_subscriber.go",
+                    "destination_dir": "app/shared/infrastructure/eventbus",
+                    "ioc_discovery": true
+                }
+            ],
+            "libraries": [
+                "github.com/nats-io/nats.go",
+                "github.com/nats-io/nats-server/v2",
+                "github.com/cloudevents/sdk-go/v2"
+            ]
         }
     ]
 }
