@@ -15,6 +15,10 @@ var _ = ioc.Register(NewGcpClient)
 
 // NewGcpClient creates a new GCP PubSub client using the configuration.
 func NewGcpClient(env configuration.Conf) (*pubsub.Client, error) {
+	if env.EVENT_BROKER != "gcp" {
+		return nil, nil
+	}
+
 	if env.GOOGLE_PROJECT_ID == "" {
 		return nil, errors.New("GOOGLE_PROJECT_ID is required for PubSub client")
 	}

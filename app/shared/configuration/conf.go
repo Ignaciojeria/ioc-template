@@ -15,6 +15,10 @@ type Conf struct {
 	// default to local postgres if not provided by env, excellent for rapid prototyping
 	DATABASE_URL string `env:"DATABASE_URL" envDefault:"postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"`
 
+	// --- EventBroker Factory ---
+	// nats | gcp
+	EVENT_BROKER string `env:"EVENT_BROKER" envDefault:"nats"`
+
 	// --- GCP Pub/Sub Configuration (Optional) ---
 	GOOGLE_PROJECT_ID string `env:"GOOGLE_PROJECT_ID"`
 }

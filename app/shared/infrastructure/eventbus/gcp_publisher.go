@@ -18,7 +18,10 @@ type GcpPublisher struct {
 }
 
 // NewGcpPublisher creates an implementation of the universal Publisher interface backed by GCP Pub/Sub.
-func NewGcpPublisher(c *pubsub.Client) (Publisher, error) {
+func NewGcpPublisher(c *pubsub.Client) (*GcpPublisher, error) {
+	if c == nil {
+		return nil, nil
+	}
 	return &GcpPublisher{client: c}, nil
 }
 

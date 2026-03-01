@@ -31,6 +31,7 @@ func TestNatsIntegrationSuite(t *testing.T) {
 		PORT:         "0",
 		PROJECT_NAME: "test",
 		VERSION:      "1.0",
+		EVENT_BROKER: "nats",
 	}
 
 	// 1) Initialize the Embedded Cluster
@@ -49,7 +50,7 @@ func TestNatsIntegrationSuite(t *testing.T) {
 	// 3) Hook up a handler capturing success
 	received := make(chan bool, 1)
 
-	sub.Register("test-topic", func(ctx context.Context, e cloudevents.Event) int {
+	sub.Start("test-topic", func(ctx context.Context, e cloudevents.Event) int {
 		var payload NatsDummyEvent
 		if err := e.DataAs(&payload); err == nil {
 			if payload.Message == "hello from memory" {
@@ -58,7 +59,7 @@ func TestNatsIntegrationSuite(t *testing.T) {
 			}
 		}
 		return http.StatusBadRequest
-	})
+	}, ReceiveSettings{})
 
 	// 4) Publish to Memory
 	event := NatsDummyEvent{Message: "hello from memory"}

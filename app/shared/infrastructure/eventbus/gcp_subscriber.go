@@ -27,9 +27,10 @@ type GcpSubscriber struct {
 	httpServer *httpserver.Server
 }
 
-// NewGcpSubscriber creates a cross-compatible Event Bus Subscriber wrapping GCP PubSub functionality
-// with an integrated PULL fallback via the Fuego HTTP POST router.
-func NewGcpSubscriber(c *pubsub.Client, s *httpserver.Server) (Subscriber, error) {
+func NewGcpSubscriber(c *pubsub.Client, s *httpserver.Server) (*GcpSubscriber, error) {
+	if c == nil {
+		return nil, nil
+	}
 	return &GcpSubscriber{client: c, httpServer: s}, nil
 }
 

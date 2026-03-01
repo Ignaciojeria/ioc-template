@@ -34,8 +34,8 @@ func TestNewGcpSubscriber(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if sub == nil {
-		t.Fatal("expected subscriber, got nil")
+	if sub != nil {
+		t.Fatal("expected nil subscriber without a valid pubsub client, got instance")
 	}
 }
 

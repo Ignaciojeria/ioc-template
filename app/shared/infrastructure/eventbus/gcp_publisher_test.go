@@ -48,8 +48,8 @@ func TestNewGcpPublisher(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if pub == nil {
-		t.Fatal("expected publisher, got nil")
+	if pub != nil {
+		t.Fatal("expected nil publisher without a valid client, got instance")
 	}
 }
 

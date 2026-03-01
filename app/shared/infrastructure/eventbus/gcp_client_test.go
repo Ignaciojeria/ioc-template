@@ -18,7 +18,7 @@ func TestNewGcpClient_Success(t *testing.T) {
 	os.Setenv("PUBSUB_EMULATOR_HOST", srv.Addr)
 	defer os.Unsetenv("PUBSUB_EMULATOR_HOST")
 
-	conf := configuration.Conf{GOOGLE_PROJECT_ID: "test-project"}
+	conf := configuration.Conf{EVENT_BROKER: "gcp", GOOGLE_PROJECT_ID: "test-project"}
 	client, err := NewGcpClient(conf)
 	if err != nil {
 		t.Fatalf("unexpected error creating client: %v", err)
@@ -34,6 +34,7 @@ func TestNewGcpClient_Success(t *testing.T) {
 
 func TestNewGcpClient_MissingProjectID(t *testing.T) {
 	conf := configuration.Conf{
+		EVENT_BROKER:      "gcp",
 		GOOGLE_PROJECT_ID: "",
 	}
 
@@ -52,6 +53,7 @@ func TestNewGcpClient_MissingProjectID(t *testing.T) {
 
 func TestNewGcpClient_FailureToConnect(t *testing.T) {
 	conf := configuration.Conf{
+		EVENT_BROKER:      "gcp",
 		GOOGLE_PROJECT_ID: "test-project",
 	}
 

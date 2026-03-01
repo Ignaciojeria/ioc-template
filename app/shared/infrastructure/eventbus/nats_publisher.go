@@ -18,6 +18,9 @@ type NatsPublisher struct {
 
 // NewNatsPublisher creates a Publisher using the Embedded NATS client connection.
 func NewNatsPublisher(client *NatsClient) *NatsPublisher {
+	if client == nil {
+		return nil
+	}
 	return &NatsPublisher{
 		client: client,
 	}

@@ -26,26 +26,28 @@ type NatsSubscriber struct {
 
 // NewNatsSubscriber initializes the struct using the in-memory NATS client
 func NewNatsSubscriber(client *NatsClient, srv *httpserver.Server) (*NatsSubscriber, error) {
+	if client == nil {
+		return nil, nil // Disabled via configuration
+	}
 	return &NatsSubscriber{
 		client: client,
 		server: srv,
 	}, nil
 }
 
-// Register adds a subscription natively inside the NATS broker
-func (s *NatsSubscriber) Register(topic string, handler MessageProcessor, middlewares ...ProcessorMiddleware) {
-	processor := ApplyMiddlewares(handler, middlewares...)
-
+// Start adds a subscription natively inside the NATS broker
+func (s *NatsSubscriber) Start(subscriptionName string, processor MessageProcessor, receiveSettings ReceiveSettings) error {
 	// Create a NATS local QueueSubscription for load-balancing semantics if needed, or normal sub.
-	sub, err := s.client.Connection.Subscribe(topic, func(m *nats.Msg) {
+	sub, err := s.client.Connection.Subscribe(subscriptionName, func(m *nats.Msg) {
 		s.processMessageAsCloudEvent(m, processor)
 	})
 
 	if err != nil {
-		log.Fatalf("Failed to register NATS subscription for topic %s: %v", topic, err)
+		return err
 	}
 
 	s.subscriptions = append(s.subscriptions, sub)
+	return nil
 }
 
 // processMessageAsCloudEvent unwraps the NATS payload exactly like GCP PULL wrappers do.

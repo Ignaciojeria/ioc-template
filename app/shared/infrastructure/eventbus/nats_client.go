@@ -25,6 +25,9 @@ type NatsClient struct {
 // within the Go application and connects a client to it. Very useful for local
 // development and tests without requiring heavy infrastructure.
 func NewNatsClient(conf configuration.Conf) (*NatsClient, error) {
+	if conf.EVENT_BROKER != "nats" {
+		return nil, nil
+	}
 
 	// 1) Spin up embedded NATS on a random local port or predefined one
 	opts := &server.Options{
