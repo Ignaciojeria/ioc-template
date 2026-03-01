@@ -2,7 +2,7 @@
 
 > Application entry point - loads IoC dependencies
 
-**Blank imports:** Each package that registers with `ioc.Register` MUST be imported in `cmd/api/main.go` via `_ "archetype/path/to/package"` (not in the root `main.go`, which is package archetype and only embeds Version). When adding a new component, the agent must add its blank import so the package loads and the IoC receives the constructor. Example:
+**Blank imports:** Each package that registers with `ioc.Register` MUST be imported in `cmd/api/main.go` via `_ "archetype/path/to/package"` (not in `version.go`, which is package archetype and only embeds Version). When adding a new component, the agent must add its blank import so the package loads and the IoC receives the constructor. Example:
 
 ```go
 import (

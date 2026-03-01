@@ -84,7 +84,7 @@
 ├── docker-compose.yml
 ├── go.mod
 ├── go.sum
-├── main.go
-└── scripts
-    └── gen-skills.config.yaml
+├── scripts
+│   └── gen-skills.config.yaml
+└── version.go
 ```

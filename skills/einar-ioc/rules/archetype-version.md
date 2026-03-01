@@ -2,7 +2,7 @@
 
 > Root package - embedded Version from .version file
 
-## main.go
+## version.go
 
 ```go
 package archetype

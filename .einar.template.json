@@ -32,8 +32,8 @@
                 "destination_file": ".gitignore"
             },
             {
-                "source_file": "main.go",
-                "destination_file": "main.go"
+                "source_file": "version.go",
+                "destination_file": "version.go"
             },
             {
                 "source_file": "README.md",
