@@ -57,11 +57,14 @@ func TestNewConf_CustomEnvs(t *testing.T) {
 	}
 }
 func TestParse_Error(t *testing.T) {
+	os.Setenv("BAD_INT", "not_a_number")
+	defer os.Unsetenv("BAD_INT")
+
 	type BadStruct struct {
-		Func func() `env:"BAD"`
+		Number int `env:"BAD_INT"`
 	}
 	_, err := Parse[BadStruct]()
 	if err == nil {
-		t.Error("expected error parsing struct with function field, got nil")
+		t.Error("expected error parsing non-numeric value into int, got nil")
 	}
 }

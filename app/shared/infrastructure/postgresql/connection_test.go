@@ -2,6 +2,7 @@ package postgresql
 
 import (
 	"context"
+	"embed"
 	"strings"
 	"testing"
 	"time"
@@ -113,5 +114,29 @@ func TestNewConnection_EmptyURL(t *testing.T) {
 
 	if !strings.Contains(err.Error(), "DATABASE_URL is not set") {
 		t.Errorf("expected connection error, got %v", err)
+	}
+}
+
+func TestInternalRunMigrations_Error(t *testing.T) {
+	// Passing an empty embed.FS should trigger iofs.New error because "migrations" folder won't exist
+	err := internalRunMigrations(nil, "test", embed.FS{})
+	if err == nil {
+		t.Fatal("expected error with empty embed.FS, got nil")
+	}
+}
+
+func TestInternalRunMigrations_NilDB(t *testing.T) {
+	// postgres.WithInstance(nil, ...) should fail
+	err := internalRunMigrations(nil, "test", migrationsFS)
+	if err == nil {
+		t.Fatal("expected error with nil db, got nil")
+	}
+}
+
+func TestRunMigrationsWrapper(t *testing.T) {
+	// Test the public wrapper
+	err := runMigrations(nil, "test")
+	if err == nil {
+		t.Fatal("expected error with nil db via wrapper, got nil")
 	}
 }

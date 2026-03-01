@@ -1,5 +1,9 @@
 # Einar Project Template
 
+[![codecov](https://codecov.io/gh/Ignaciojeria/ioc-template/branch/main/graph/badge.svg)](https://codecov.io/gh/Ignaciojeria/ioc-template)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Ignaciojeria/ioc-template)](https://goreportcard.com/report/github.com/Ignaciojeria/ioc-template)
+[![Go Reference](https://pkg.go.dev/badge/github.com/Ignaciojeria/ioc-template.svg)](https://pkg.go.dev/github.com/Ignaciojeria/ioc-template)
+
 Welcome to your new Einar-based Go project! This project has been scaffolded using [Einar CLI](https://github.com/Ignaciojeria/einar) and is powered by [einar-ioc](https://github.com/Ignaciojeria/einar-ioc), a purely Go-idiomatic, type-safe Dependency Injection framework.
 
 This README serves as both a guide for human developers and a context prompt for AI agents collaborating on this codebase.

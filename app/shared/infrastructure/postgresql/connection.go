@@ -46,7 +46,7 @@ func NewConnection(env configuration.Conf) (*sqlx.DB, error) {
 	dbName := strings.TrimPrefix(u.Path, "/")
 
 	// 3️⃣ Correr migraciones automáticamente
-	if err := runMigrations(db, dbName); err != nil {
+	if err := internalRunMigrations(db, dbName, migrationsFS); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
@@ -54,8 +54,11 @@ func NewConnection(env configuration.Conf) (*sqlx.DB, error) {
 	return db, nil
 }
 
-func runMigrations(db *sqlx.DB, dbName string) error {
-	d, err := iofs.New(migrationsFS, "migrations")
+func internalRunMigrations(db *sqlx.DB, dbName string, fsys embed.FS) error {
+	if db == nil {
+		return fmt.Errorf("db connection is nil")
+	}
+	d, err := iofs.New(fsys, "migrations")
 	if err != nil {
 		return err
 	}
@@ -83,4 +86,10 @@ func runMigrations(db *sqlx.DB, dbName string) error {
 
 	slog.Info("Database migrations validated/applied successfully")
 	return nil
+}
+
+// Deprecated: use NewConnection which handles migrations internally.
+// Function signature kept for backward compatibility if needed by generated code.
+func runMigrations(db *sqlx.DB, dbName string) error {
+	return internalRunMigrations(db, dbName, migrationsFS)
 }
