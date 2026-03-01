@@ -27,7 +27,7 @@ func TestNewServer(t *testing.T) {
 
 func TestStartServer(t *testing.T) {
 	conf := configuration.Conf{
-		PORT:         "8082",
+		PORT:         "0",
 		PROJECT_NAME: "test-start",
 		VERSION:      "v1",
 	}
