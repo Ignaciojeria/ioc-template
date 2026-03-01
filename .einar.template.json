@@ -401,6 +401,75 @@
                     "literal_replacements": []
                 }
             ]
+        },
+        {
+            "kind": "pubsub-consumer",
+            "adapter_type": "inbound",
+            "command": "einar generate pubsub-consumer ${operation_name}",
+            "depends_on": [
+                "gcp-pubsub"
+            ],
+            "files": [
+                {
+                    "source_file": "app/adapter/in/pubsubapi/consumer.go",
+                    "destination_dir": "app/adapter/in/pubsubapi",
+                    "ioc_discovery": true,
+                    "replace_holders": [
+                        {
+                            "kind": "PascalCase",
+                            "name": "NewTemplateConsumer",
+                            "append_at_start": "New",
+                            "append_at_end": "Consumer"
+                        },
+                        {
+                            "kind": "PascalCase",
+                            "name": "TemplateConsumer",
+                            "append_at_start": "",
+                            "append_at_end": "Consumer"
+                        },
+                        {
+                            "kind": "PascalCase",
+                            "name": "TemplateMessage",
+                            "append_at_start": "",
+                            "append_at_end": "Message"
+                        }
+                    ],
+                    "literal_replacements": []
+                },
+                {
+                    "source_file": "app/adapter/in/pubsubapi/consumer_test.go",
+                    "destination_dir": "app/adapter/in/pubsubapi",
+                    "ioc_discovery": true,
+                    "append_at_end": "_test",
+                    "replace_holders": [
+                        {
+                            "kind": "PascalCase",
+                            "name": "NewTemplateConsumer",
+                            "append_at_start": "New",
+                            "append_at_end": "Consumer"
+                        },
+                        {
+                            "kind": "PascalCase",
+                            "name": "TestNewTemplateConsumer",
+                            "append_at_start": "TestNew",
+                            "append_at_end": "Consumer"
+                        },
+                        {
+                            "kind": "PascalCase",
+                            "name": "TemplateConsumer",
+                            "append_at_start": "",
+                            "append_at_end": "Consumer"
+                        },
+                        {
+                            "kind": "PascalCase",
+                            "name": "TemplateMessage",
+                            "append_at_start": "",
+                            "append_at_end": "Message"
+                        }
+                    ],
+                    "literal_replacements": []
+                }
+            ]
         }
     ],
     "installation_commands": [
@@ -423,6 +492,35 @@
             "libraries": [
                 "github.com/go-fuego/fuego",
                 "github.com/hellofresh/health-go/v5"
+            ]
+        },
+        {
+            "name": "gcp-pubsub",
+            "depends_on": [],
+            "files": [
+                {
+                    "source_file": "app/shared/infrastructure/pubsub/client.go",
+                    "destination_dir": "app/shared/infrastructure/pubsub",
+                    "ioc_discovery": true
+                },
+                {
+                    "source_file": "app/shared/infrastructure/pubsub/client_test.go",
+                    "destination_dir": "app/shared/infrastructure/pubsub",
+                    "ioc_discovery": true
+                },
+                {
+                    "source_file": "app/shared/configuration/pubsub_conf.go",
+                    "destination_dir": "app/shared/configuration",
+                    "ioc_discovery": false
+                },
+                {
+                    "source_file": "app/shared/configuration/pubsub_conf_test.go",
+                    "destination_dir": "app/shared/configuration",
+                    "ioc_discovery": false
+                }
+            ],
+            "libraries": [
+                "cloud.google.com/go/pubsub"
             ]
         }
     ]
