@@ -3,14 +3,7 @@ PORT=8080
 PROJECT_NAME=my-ioc-app
 
 # --- PostgreSQL Example Configuration ---
-# DATABASE_URL=postgres://user:password@localhost:5432/dbname?sslmode=disable
-# OR
-# DATABASE_POSTGRES_HOSTNAME=localhost
-# DATABASE_POSTGRES_PORT=5432
-# DATABASE_POSTGRES_NAME=dbname
-# DATABASE_POSTGRES_USERNAME=user
-# DATABASE_POSTGRES_PASSWORD=password
-# DATABASE_POSTGRES_SSL_MODE=disable
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
 
 # --- GCP Pub/Sub Example Configuration ---
 # GOOGLE_PROJECT_ID=my-gcp-project-123

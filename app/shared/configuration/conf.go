@@ -12,13 +12,8 @@ type Conf struct {
 	VERSION      string `env:"VERSION"`
 
 	// --- PostgreSQL Configuration (Optional) ---
-	DATABASE_URL               string `env:"DATABASE_URL"`
-	DATABASE_POSTGRES_HOSTNAME string `env:"DATABASE_POSTGRES_HOSTNAME"`
-	DATABASE_POSTGRES_PORT     string `env:"DATABASE_POSTGRES_PORT"`
-	DATABASE_POSTGRES_NAME     string `env:"DATABASE_POSTGRES_NAME"`
-	DATABASE_POSTGRES_USERNAME string `env:"DATABASE_POSTGRES_USERNAME"`
-	DATABASE_POSTGRES_PASSWORD string `env:"DATABASE_POSTGRES_PASSWORD"`
-	DATABASE_POSTGRES_SSL_MODE string `env:"DATABASE_POSTGRES_SSL_MODE"`
+	// default to local postgres if not provided by env, excellent for rapid prototyping
+	DATABASE_URL string `env:"DATABASE_URL" envDefault:"postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"`
 
 	// --- GCP Pub/Sub Configuration (Optional) ---
 	GOOGLE_PROJECT_ID string `env:"GOOGLE_PROJECT_ID"`

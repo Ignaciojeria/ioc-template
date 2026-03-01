@@ -9,8 +9,7 @@ import (
 
 func TestNewConnection_InvalidURL(t *testing.T) {
 	conf := configuration.Conf{
-		DATABASE_URL:               "invalid_url",
-		DATABASE_POSTGRES_HOSTNAME: "localhost", // Triggers the warn override
+		DATABASE_URL: "invalid_url",
 	}
 
 	db, err := NewConnection(conf)
@@ -27,26 +26,20 @@ func TestNewConnection_InvalidURL(t *testing.T) {
 	}
 }
 
-func TestNewConnection_InvalidDSN(t *testing.T) {
+func TestNewConnection_EmptyURL(t *testing.T) {
 	conf := configuration.Conf{
-		DATABASE_URL:               "",
-		DATABASE_POSTGRES_USERNAME: "test",
-		DATABASE_POSTGRES_PASSWORD: "test",
-		DATABASE_POSTGRES_HOSTNAME: "invalid_host",
-		DATABASE_POSTGRES_PORT:     "abcd", // invalid port format
-		DATABASE_POSTGRES_NAME:     "db",
-		DATABASE_POSTGRES_SSL_MODE: "disable",
+		DATABASE_URL: "",
 	}
 
 	db, err := NewConnection(conf)
 	if err == nil {
-		t.Fatal("expected error connecting with invalid explicit parameters, got nil")
+		t.Fatal("expected error connecting with empty URL, got nil")
 	}
 	if db != nil {
 		t.Errorf("expected nil db on error, got %v", db)
 	}
 
-	if !strings.Contains(err.Error(), "failed to connect") {
+	if !strings.Contains(err.Error(), "DATABASE_URL is not set") {
 		t.Errorf("expected connection error, got %v", err)
 	}
 }

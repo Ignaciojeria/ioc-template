@@ -4,6 +4,8 @@ import (
 	"embed"
 	"fmt"
 	"log/slog"
+	"net/url"
+	"strings"
 
 	"archetype/app/shared/configuration"
 
@@ -25,27 +27,26 @@ var migrationsFS embed.FS
 func NewConnection(env configuration.Conf) (*sqlx.DB, error) {
 
 	dsn := env.DATABASE_URL
-	// 1️⃣ Si DATABASE_URL no está seteado, armarlo manualmente
 	if dsn == "" {
-		dsn = "postgres://" + env.DATABASE_POSTGRES_USERNAME + ":" +
-			env.DATABASE_POSTGRES_PASSWORD + "@" +
-			env.DATABASE_POSTGRES_HOSTNAME + ":" +
-			env.DATABASE_POSTGRES_PORT + "/" +
-			env.DATABASE_POSTGRES_NAME + "?sslmode=" +
-			env.DATABASE_POSTGRES_SSL_MODE
-	} else if env.DATABASE_POSTGRES_HOSTNAME != "" {
-		// Warning elegante: si hay tanto URL como variables individuales
-		slog.Warn("[config warning] DATABASE_URL is set and overrides individual Postgres variables")
+		return nil, fmt.Errorf("DATABASE_URL is not set")
 	}
 
-	// 2️⃣ Conectar con el driver nativo puro pgx
+	// 1️⃣ Conectar con el driver nativo puro pgx
 	db, err := sqlx.Connect("pgx", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to postgres: %w", err)
 	}
 
+	// 2️⃣ Extraer nombre de la base de datos para las migraciones
+	u, err := url.Parse(dsn)
+	if err != nil {
+		db.Close()
+		return nil, fmt.Errorf("invalid DATABASE_URL format: %w", err)
+	}
+	dbName := strings.TrimPrefix(u.Path, "/")
+
 	// 3️⃣ Correr migraciones automáticamente
-	if err := runMigrations(db, env.DATABASE_POSTGRES_NAME); err != nil {
+	if err := runMigrations(db, dbName); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
