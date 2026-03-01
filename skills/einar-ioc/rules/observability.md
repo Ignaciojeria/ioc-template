@@ -1,83 +1,104 @@
----
-name: observability
-description: Distributed tracing and JSON logging via Dependency Injection
----
+# observability
 
-## Overview
+> OpenTelemetry observability setup
 
-Einar provides unified observability through OpenTelemetry (traces) and `log/slog` (structured JSON logging).
-
-These components are encapsulated inside the `observability.Observability` struct defined in `app/shared/infrastructure/observability`.
-
-## Injecting Observability
-
-You MUST NEVER use the standard `log` package, `fmt.Printf`, or `fmt.Println` to log information.
-Instead, your components MUST inject `observability.Observability` via their IoC constructors.
-
-### Boilerplate Example
+## app/shared/infrastructure/observability/observability.go
 
 ```go
-package usecase
+package observability
 
 import (
-    "context"
-    "github.com/Ignaciojeria/ioc"
-    "archetype/app/shared/infrastructure/observability"
+	"context"
+	"fmt"
+	"log/slog"
+	"os"
+	"time"
+
+	"archetype/app/shared/configuration"
+
+	"github.com/Ignaciojeria/ioc"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
-var _ = ioc.Register(NewMyUseCase)
+var _ = ioc.Register(NewObservability)
 
-type MyUseCase struct {
-    obs observability.Observability
+type Observability struct {
+	Tracer trace.Tracer
+	Logger *slog.Logger
 }
 
-// 1. Ask for Observability in the constructor
-func NewMyUseCase(obs observability.Observability) *MyUseCase {
-    return &MyUseCase{obs: obs}
-}
-```
+// NewObservability sets up the OpenTelemetry Tracer and Slog Logger.
+// It uses OTEL_EXPORTER_OTLP_ENDPOINT from the environment if present.
+func NewObservability(conf configuration.Conf) (Observability, error) {
+	// Configure global OpenTelemetry text map propagators to support trace continuity
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	))
 
-## Context-Aware Logging (Slog)
+	// Setup Slog with JSON structure
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})).With(
+		slog.String("service", conf.PROJECT_NAME),
+		slog.String("version", conf.VERSION),
+	)
 
-To ensure logs are correlated with OpenTelemetry traces (TraceID, SpanID), you MUST use the contextual logging methods (`InfoContext`, `ErrorContext`, etc.) on the injected logger.
+	// Set as global default logger
+	slog.SetDefault(logger)
 
-```go
-func (uc *MyUseCase) Execute(ctx context.Context) {
-    // CORRECT: The context contains the TraceID injected by Fuego or EventBus middlewares
-    uc.obs.Logger.InfoContext(ctx, "started executing use case",
-        "action", "Execute",
-        "attempt", 1,
-    )
+	var tp *sdktrace.TracerProvider
+	endpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
 
-    // WRONG: Loses trace correlation!
-    uc.obs.Logger.Info("started executing use case")
-}
-```
+	if endpoint != "" {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
 
-## OpenTelemetry Tracing
+		exporter, err := otlptracehttp.New(ctx,
+			otlptracehttp.WithEndpointURL(endpoint),
+			otlptracehttp.WithInsecure(),
+		)
+		if err != nil {
+			logger.Error("failed to create otlp exporter", "error", err)
+			return Observability{}, fmt.Errorf("failed to create otlp exporter: %w", err)
+		}
 
-When executing complex business logic or wrapping external calls, you MUST use the injected `Tracer` to create spans natively.
+		res, err := resource.Merge(
+			resource.Default(),
+			resource.NewWithAttributes(
+				semconv.SchemaURL,
+				semconv.ServiceName(conf.PROJECT_NAME),
+				semconv.ServiceVersion(conf.VERSION),
+			),
+		)
+		if err != nil {
+			return Observability{}, fmt.Errorf("failed to create resource: %w", err)
+		}
 
-```go
-import "go.opentelemetry.io/otel/attribute"
+		tp = sdktrace.NewTracerProvider(
+			sdktrace.WithBatcher(exporter),
+			sdktrace.WithResource(res),
+		)
+		otel.SetTracerProvider(tp)
+		logger.Info("opentelemetry tracer initialized", "endpoint", endpoint)
+	} else {
+		// Fallback to No-op tracer if endpoint is not set to avoid breaking local dev
+		tp = sdktrace.NewTracerProvider()
+		otel.SetTracerProvider(tp)
+		logger.Info("opentelemetry disabled, no OTEL_EXPORTER_OTLP_ENDPOINT environment variable set")
+	}
 
-func (uc *MyUseCase) Execute(ctx context.Context, param string) error {
-    // 1. Start a span from the injected Tracer
-    ctx, span := uc.obs.Tracer.Start(ctx, "ExecuteLogic")
-    defer span.End() // 2. Ensure it ends
+	tracer := tp.Tracer(conf.PROJECT_NAME)
 
-    // 3. Add custom attributes for searchability
-    span.SetAttributes(attribute.String("param.value", param))
-
-    // 4. Pass the wrapped context down to repositories or publishers 
-    // to keep the distributed trace alive natively!
-    err := uc.repository.Save(ctx, param)
-    if err != nil {
-        span.RecordError(err)
-        uc.obs.Logger.ErrorContext(ctx, "failed to save", "error", err)
-        return err
-    }
-
-    return nil
+	return Observability{
+		Tracer: tracer,
+		Logger: logger,
+	}, nil
 }
 ```

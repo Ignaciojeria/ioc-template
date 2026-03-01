@@ -14,3 +14,9 @@ coverage
 
 # Go workspace
 go.work
+
+# Generated docs are in skills/einar-ioc/rules (regenerate with: go run ./scripts/gen-from-template)
+
+# Temp coverage files from test runs
+eb
+hs

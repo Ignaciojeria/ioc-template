@@ -115,3 +115,15 @@ The application manages variables via a single connection string or specific env
 
 - Default configurations use Struct Tags (e.g., `` env:"DATABASE_URL" envDefault:"postgres://..." ``).
 - Use `configuration.Conf` as a dependency. Never read from `os.Getenv` directly within logic.
+
+## 📝 Generated Documentation
+
+The `skills/einar-ioc/rules/` directory contains markdown files with the full source code of each template component. These files are auto-generated from the actual codebase and can be used as Cursor rules or skills.
+
+**Regenerate after modifying template files:**
+
+```bash
+go run ./scripts/gen-from-template
+```
+
+The mapping between source files and generated markdown is defined in `scripts/gen-skills.config.yaml`. To add a new component, add an entry to the config and re-run the script.

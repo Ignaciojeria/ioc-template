@@ -1,0 +1,92 @@
+output_dir: skills/einar-ioc/rules
+
+outputs:
+  - md: structure.md
+    description: "Project directory structure"
+    structure: true
+
+  - md: archetype-version.md
+    description: "Root package - embedded Version from .version file"
+    sources:
+      - main.go
+
+  - md: main.md
+    description: "Application entry point - loads IoC dependencies"
+    sources:
+      - cmd/api/main.go
+
+  - md: configuration.md
+    description: "Environment configuration with caarlos0/env and godotenv"
+    sources:
+      - app/shared/configuration/conf.go
+      - app/shared/configuration/parse.go
+
+  - md: httpserver.md
+    description: "HTTP server setup with Fuego framework and healthcheck"
+    sources:
+      - app/shared/infrastructure/httpserver/server.go
+
+  - md: request-logger-middleware.md
+    description: "HTTP request logger middleware"
+    sources:
+      - app/shared/infrastructure/httpserver/middleware/request_logger.go
+
+  - md: observability.md
+    description: "OpenTelemetry observability setup"
+    sources:
+      - app/shared/infrastructure/observability/observability.go
+
+  - md: postgresql-connection.md
+    description: "PostgreSQL connection with embedded migrations via sqlx and golang-migrate"
+    sources:
+      - app/shared/infrastructure/postgresql/connection.go
+
+  - md: postgresql-migrations.md
+    description: "Example migrations - naming convention and up/down pattern (golang-migrate)"
+    sources:
+      - app/shared/infrastructure/postgresql/migrations/000001_initial_schema.up.sql
+      - app/shared/infrastructure/postgresql/migrations/000001_initial_schema.down.sql
+
+  - md: eventbus-strategy.md
+    description: "EventBus strategy pattern - interfaces, middleware, and types"
+    sources:
+      - app/shared/infrastructure/eventbus/strategy.go
+      - app/shared/infrastructure/eventbus/factory.go
+
+  - md: eventbus-gcp.md
+    description: "GCP Pub/Sub client, publisher, and subscriber implementation"
+    sources:
+      - app/shared/infrastructure/eventbus/gcp_client.go
+      - app/shared/infrastructure/eventbus/gcp_publisher.go
+      - app/shared/infrastructure/eventbus/gcp_subscriber.go
+
+  - md: eventbus-nats.md
+    description: "NATS client, publisher, and subscriber implementation"
+    sources:
+      - app/shared/infrastructure/eventbus/nats_client.go
+      - app/shared/infrastructure/eventbus/nats_publisher.go
+      - app/shared/infrastructure/eventbus/nats_subscriber.go
+
+  - md: consumer.md
+    description: "Inbound EventBus consumer pattern with CloudEvents"
+    sources:
+      - app/adapter/in/eventbus/consumer.go
+
+  - md: publisher.md
+    description: "Outbound EventBus publisher adapter"
+    sources:
+      - app/adapter/out/eventbus/publisher.go
+
+  - md: fuegoapi-controllers.md
+    description: "REST API controllers scaffolded with Fuego (GET, POST, PUT, PATCH, DELETE)"
+    sources:
+      - app/adapter/in/fuegoapi/get.go
+      - app/adapter/in/fuegoapi/post.go
+      - app/adapter/in/fuegoapi/put.go
+      - app/adapter/in/fuegoapi/patch.go
+      - app/adapter/in/fuegoapi/delete.go
+
+  - md: postgres-repository.md
+    description: "PostgreSQL repository pattern with sqlx and go-sqlmock"
+    sources:
+      - app/adapter/out/postgres/postgres_repository.go
