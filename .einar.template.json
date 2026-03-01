@@ -411,8 +411,8 @@
             ],
             "files": [
                 {
-                    "source_file": "app/adapter/in/pubsubapi/consumer.go",
-                    "destination_dir": "app/adapter/in/pubsubapi",
+                    "source_file": "app/adapter/in/eventbus/consumer.go",
+                    "destination_dir": "app/adapter/in/eventbus",
                     "ioc_discovery": true,
                     "replace_holders": [
                         {
@@ -432,13 +432,19 @@
                             "name": "TemplateMessage",
                             "append_at_start": "",
                             "append_at_end": "Message"
+                        },
+                        {
+                            "kind": "SnakeCase",
+                            "name": "template_topic_or_hook",
+                            "append_at_start": "",
+                            "append_at_end": ""
                         }
                     ],
                     "literal_replacements": []
                 },
                 {
-                    "source_file": "app/adapter/in/pubsubapi/consumer_test.go",
-                    "destination_dir": "app/adapter/in/pubsubapi",
+                    "source_file": "app/adapter/in/eventbus/consumer_test.go",
+                    "destination_dir": "app/adapter/in/eventbus",
                     "ioc_discovery": true,
                     "append_at_end": "_test",
                     "replace_holders": [
@@ -499,18 +505,29 @@
             "depends_on": [],
             "files": [
                 {
-                    "source_file": "app/shared/infrastructure/pubsub/client.go",
-                    "destination_dir": "app/shared/infrastructure/pubsub",
+                    "source_file": "app/shared/infrastructure/eventbus/strategy.go",
+                    "destination_dir": "app/shared/infrastructure/eventbus",
+                    "ioc_discovery": false
+                },
+                {
+                    "source_file": "app/shared/infrastructure/eventbus/gcp_client.go",
+                    "destination_dir": "app/shared/infrastructure/eventbus",
                     "ioc_discovery": true
                 },
                 {
-                    "source_file": "app/shared/infrastructure/pubsub/client_test.go",
-                    "destination_dir": "app/shared/infrastructure/pubsub",
+                    "source_file": "app/shared/infrastructure/eventbus/gcp_publisher.go",
+                    "destination_dir": "app/shared/infrastructure/eventbus",
+                    "ioc_discovery": true
+                },
+                {
+                    "source_file": "app/shared/infrastructure/eventbus/gcp_subscriber.go",
+                    "destination_dir": "app/shared/infrastructure/eventbus",
                     "ioc_discovery": true
                 }
             ],
             "libraries": [
-                "cloud.google.com/go/pubsub"
+                "cloud.google.com/go/pubsub",
+                "github.com/cloudevents/sdk-go/v2"
             ]
         }
     ]

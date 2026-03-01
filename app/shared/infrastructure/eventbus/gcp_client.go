@@ -1,4 +1,4 @@
-package pubsub
+package eventbus
 
 import (
 	"context"
@@ -11,10 +11,10 @@ import (
 	"github.com/Ignaciojeria/ioc"
 )
 
-var _ = ioc.Register(NewClient)
+var _ = ioc.Register(NewGcpClient)
 
-// NewClient creates a new GCP PubSub client using the configuration.
-func NewClient(env configuration.Conf) (*pubsub.Client, error) {
+// NewGcpClient creates a new GCP PubSub client using the configuration.
+func NewGcpClient(env configuration.Conf) (*pubsub.Client, error) {
 	if env.GOOGLE_PROJECT_ID == "" {
 		return nil, errors.New("GOOGLE_PROJECT_ID is required for PubSub client")
 	}
