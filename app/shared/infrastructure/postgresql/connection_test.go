@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewConnection_InvalidURL(t *testing.T) {
-	conf := configuration.PostgreSQLConfiguration{
+	conf := configuration.Conf{
 		DATABASE_URL:               "invalid_url",
 		DATABASE_POSTGRES_HOSTNAME: "localhost", // Triggers the warn override
 	}
@@ -28,7 +28,7 @@ func TestNewConnection_InvalidURL(t *testing.T) {
 }
 
 func TestNewConnection_InvalidDSN(t *testing.T) {
-	conf := configuration.PostgreSQLConfiguration{
+	conf := configuration.Conf{
 		DATABASE_URL:               "",
 		DATABASE_POSTGRES_USERNAME: "test",
 		DATABASE_POSTGRES_PASSWORD: "test",

@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewClient_MissingProjectID(t *testing.T) {
-	conf := configuration.PubSubConfiguration{
+	conf := configuration.Conf{
 		GOOGLE_PROJECT_ID: "",
 	}
 

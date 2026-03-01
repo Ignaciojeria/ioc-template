@@ -507,16 +507,6 @@
                     "source_file": "app/shared/infrastructure/pubsub/client_test.go",
                     "destination_dir": "app/shared/infrastructure/pubsub",
                     "ioc_discovery": true
-                },
-                {
-                    "source_file": "app/shared/configuration/pubsub_conf.go",
-                    "destination_dir": "app/shared/configuration",
-                    "ioc_discovery": false
-                },
-                {
-                    "source_file": "app/shared/configuration/pubsub_conf_test.go",
-                    "destination_dir": "app/shared/configuration",
-                    "ioc_discovery": false
                 }
             ],
             "libraries": [

@@ -22,7 +22,7 @@ var migrationsFS embed.FS
 
 // NewConnection creates a new PostgreSQL sqlx connection using the provided configuration.
 // It automatically executes any pending migrations encoded in the migrationsFS embedded folder.
-func NewConnection(env configuration.PostgreSQLConfiguration) (*sqlx.DB, error) {
+func NewConnection(env configuration.Conf) (*sqlx.DB, error) {
 
 	dsn := env.DATABASE_URL
 	// 1️⃣ Si DATABASE_URL no está seteado, armarlo manualmente

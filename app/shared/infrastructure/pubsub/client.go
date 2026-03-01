@@ -14,7 +14,7 @@ import (
 var _ = ioc.Register(NewClient)
 
 // NewClient creates a new GCP PubSub client using the configuration.
-func NewClient(env configuration.PubSubConfiguration) (*pubsub.Client, error) {
+func NewClient(env configuration.Conf) (*pubsub.Client, error) {
 	if env.GOOGLE_PROJECT_ID == "" {
 		return nil, errors.New("GOOGLE_PROJECT_ID is required for PubSub client")
 	}
