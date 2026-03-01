@@ -7,6 +7,8 @@ import (
 
 	"cloud.google.com/go/pubsub"
 	"github.com/Ignaciojeria/ioc"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 var _ = ioc.Register(NewGcpPublisher)
@@ -26,6 +28,14 @@ func (p *GcpPublisher) Publish(
 	request PublishRequest,
 ) error {
 	ce := request.Event.ToCloudEvent()
+
+	// Inject OpenTelemetry trace context into the CloudEvent extensions
+	carrier := propagation.MapCarrier{}
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
+
+	for k, v := range carrier {
+		ce.SetExtension(k, v)
+	}
 
 	bytes, err := json.Marshal(ce)
 	if err != nil {

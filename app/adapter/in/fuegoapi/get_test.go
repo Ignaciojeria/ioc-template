@@ -16,7 +16,7 @@ func TestNewTemplateGet(t *testing.T) {
 		VERSION:      "v1",
 	}
 
-	server, err := httpserver.NewServer(conf)
+	server, err := httpserver.NewServer(conf, nil)
 	if err != nil {
 		t.Fatalf("unexpected error creating server: %v", err)
 	}

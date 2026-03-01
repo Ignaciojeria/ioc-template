@@ -15,6 +15,8 @@ import (
 	"github.com/hellofresh/health-go/v5"
 
 	"archetype/app/shared/configuration"
+	"archetype/app/shared/infrastructure/httpserver/middleware"
+	"archetype/app/shared/infrastructure/observability"
 )
 
 var (
@@ -31,8 +33,17 @@ type Server struct {
 
 // NewServer creates a new instance of the HTTP Fuego Server.
 // It returns a pointer because it manages network state.
-func NewServer(conf configuration.Conf) (*Server, error) {
-	s := fuego.NewServer(fuego.WithAddr(":" + conf.PORT))
+func NewServer(conf configuration.Conf, requestLogger middleware.RequestLogger) (*Server, error) {
+	s := fuego.NewServer(
+		fuego.WithAddr(":"+conf.PORT),
+		fuego.WithGlobalMiddlewares(requestLogger),
+	)
+
+	// Defaults tailored for resiliency, preventing long-hanging idle connections
+	s.ReadTimeout = 30 * time.Minute
+	s.WriteTimeout = 30 * time.Minute
+	s.ReadHeaderTimeout = 30 * time.Minute
+	s.IdleTimeout = 30 * time.Minute
 
 	server := &Server{
 		Manager: s,
@@ -48,7 +59,7 @@ func NewServer(conf configuration.Conf) (*Server, error) {
 
 // StartServer runs at the end of the dependency graph and starts the HTTP server.
 // It blocks the main thread and gracefully handles OS signals.
-func StartServer(s *Server) error {
+func StartServer(s *Server, obs observability.Observability) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -60,14 +71,19 @@ func StartServer(s *Server) error {
 		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, shutdownTimeout)
 		defer shutdownCancel()
 
-		fmt.Println("Shutting down server gracefully...")
 		if err := s.Manager.Shutdown(shutdownCtx); err != nil {
-			fmt.Printf("Shutdown error: %v\n", err)
+			obs.Logger.Error("server shutdown error", "error", err)
 		}
 		cancel()
 	}()
 
-	fmt.Printf("Starting HTTP server on port %s\n", s.conf.PORT)
+	obs.Logger.Info(
+		"http server starting",
+		"port", s.conf.PORT,
+		"service", s.conf.PROJECT_NAME,
+		"version", s.conf.VERSION,
+	)
+
 	if err := s.Manager.Run(); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("server failed to start: %w", err)
 	}

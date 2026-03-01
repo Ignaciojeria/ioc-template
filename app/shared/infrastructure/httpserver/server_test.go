@@ -3,6 +3,8 @@ package httpserver
 import (
 	"context"
 	"errors"
+	"io"
+	"log/slog"
 	"os"
 	"strings"
 	"syscall"
@@ -10,9 +12,21 @@ import (
 	"time"
 
 	"archetype/app/shared/configuration"
+	"archetype/app/shared/infrastructure/httpserver/middleware"
+	"archetype/app/shared/infrastructure/observability"
 
 	"github.com/hellofresh/health-go/v5"
+	"go.opentelemetry.io/otel/trace/noop"
 )
+
+func createDummyObservability() (observability.Observability, middleware.RequestLogger) {
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	obs := observability.Observability{
+		Tracer: noop.NewTracerProvider().Tracer("test"),
+		Logger: logger,
+	}
+	return obs, middleware.NewRequestLogger(obs)
+}
 
 func TestNewServer_HealthCheckError(t *testing.T) {
 	oldHealthNew := healthNew
@@ -28,7 +42,9 @@ func TestNewServer_HealthCheckError(t *testing.T) {
 		VERSION:      "v1",
 	}
 
-	_, err := NewServer(conf)
+	_, mw := createDummyObservability()
+
+	_, err := NewServer(conf, mw)
 	if err == nil {
 		t.Fatal("expected error when health init fails, got nil")
 	}
@@ -44,7 +60,8 @@ func TestNewServer(t *testing.T) {
 		VERSION:      "v1",
 	}
 
-	server, err := NewServer(conf)
+	_, mw := createDummyObservability()
+	server, err := NewServer(conf, mw)
 	if err != nil {
 		t.Fatalf("unexpected error creating server: %v", err)
 	}
@@ -61,7 +78,8 @@ func TestStartServer_GracefulShutdown(t *testing.T) {
 		VERSION:      "v1",
 	}
 
-	server, err := NewServer(conf)
+	obs, mw := createDummyObservability()
+	server, err := NewServer(conf, mw)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -69,7 +87,7 @@ func TestStartServer_GracefulShutdown(t *testing.T) {
 	errChan := make(chan error, 1)
 
 	go func() {
-		errChan <- StartServer(server)
+		errChan <- StartServer(server, obs)
 	}()
 
 	time.Sleep(200 * time.Millisecond)
@@ -92,19 +110,18 @@ func TestStartServer_GracefulShutdown(t *testing.T) {
 }
 
 func TestStartServer_Signal(t *testing.T) {
-	// Skip signal test on windows if it is flaky
-	// but let's try it one last time
 	conf := configuration.Conf{
 		PORT:         "0",
 		PROJECT_NAME: "test-signal",
 		VERSION:      "v1",
 	}
 
-	server, _ := NewServer(conf)
+	obs, mw := createDummyObservability()
+	server, _ := NewServer(conf, mw)
 	errChan := make(chan error, 1)
 
 	go func() {
-		errChan <- StartServer(server)
+		errChan <- StartServer(server, obs)
 	}()
 
 	time.Sleep(200 * time.Millisecond)
@@ -122,7 +139,6 @@ func TestStartServer_Signal(t *testing.T) {
 }
 
 func TestStartServer_ShutdownError(t *testing.T) {
-	// Use very short timeout so Shutdown fails with context.DeadlineExceeded
 	oldTimeout := shutdownTimeout
 	shutdownTimeout = 1
 	defer func() { shutdownTimeout = oldTimeout }()
@@ -132,19 +148,20 @@ func TestStartServer_ShutdownError(t *testing.T) {
 		PROJECT_NAME: "test-shutdown-err",
 		VERSION:      "v1",
 	}
-	server, err := NewServer(conf)
+
+	obs, mw := createDummyObservability()
+	server, err := NewServer(conf, mw)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	errChan := make(chan error, 1)
 	go func() {
-		errChan <- StartServer(server)
+		errChan <- StartServer(server, obs)
 	}()
 
 	time.Sleep(200 * time.Millisecond)
 
-	// Send signal to trigger shutdown with short timeout
 	p, _ := os.FindProcess(os.Getpid())
 	_ = p.Signal(syscall.SIGINT)
 
@@ -163,12 +180,13 @@ func TestStartServer_InvalidPort(t *testing.T) {
 		VERSION:      "v1",
 	}
 
-	server, err := NewServer(conf)
+	obs, mw := createDummyObservability()
+	server, err := NewServer(conf, mw)
 	if err != nil {
 		t.Fatalf("unexpected error creating server: %v", err)
 	}
 
-	err = StartServer(server)
+	err = StartServer(server, obs)
 	if err == nil {
 		t.Fatal("expected error due to invalid port, got nil")
 	}

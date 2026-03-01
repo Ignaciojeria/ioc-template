@@ -482,7 +482,9 @@
         {
             "name": "fuego",
             "unique": "http-server",
-            "depends_on": [],
+            "depends_on": [
+                "observability"
+            ],
             "files": [
                 {
                     "source_file": "app/shared/infrastructure/httpserver/server.go",
@@ -493,6 +495,16 @@
                     "source_file": "app/shared/infrastructure/httpserver/server_test.go",
                     "destination_dir": "app/shared/infrastructure/httpserver",
                     "ioc_discovery": true
+                },
+                {
+                    "source_file": "app/shared/infrastructure/httpserver/middleware/request_logger.go",
+                    "destination_dir": "app/shared/infrastructure/httpserver/middleware",
+                    "ioc_discovery": true
+                },
+                {
+                    "source_file": "app/shared/infrastructure/httpserver/middleware/request_logger_test.go",
+                    "destination_dir": "app/shared/infrastructure/httpserver/middleware",
+                    "ioc_discovery": true
                 }
             ],
             "libraries": [
@@ -502,7 +514,9 @@
         },
         {
             "name": "gcp-pubsub",
-            "depends_on": [],
+            "depends_on": [
+                "observability"
+            ],
             "files": [
                 {
                     "source_file": "app/shared/infrastructure/eventbus/strategy.go",
@@ -528,6 +542,32 @@
             "libraries": [
                 "cloud.google.com/go/pubsub",
                 "github.com/cloudevents/sdk-go/v2"
+            ]
+        },
+        {
+            "name": "observability",
+            "depends_on": [],
+            "files": [
+                {
+                    "source_file": "app/shared/infrastructure/observability/observability.go",
+                    "destination_dir": "app/shared/infrastructure/observability",
+                    "ioc_discovery": true
+                },
+                {
+                    "source_file": "app/shared/infrastructure/observability/observability_test.go",
+                    "destination_dir": "app/shared/infrastructure/observability",
+                    "ioc_discovery": true
+                }
+            ],
+            "libraries": [
+                "go.opentelemetry.io/otel",
+                "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp",
+                "go.opentelemetry.io/otel/propagation",
+                "go.opentelemetry.io/otel/sdk/resource",
+                "go.opentelemetry.io/otel/sdk/trace",
+                "go.opentelemetry.io/otel/semconv/v1.26.0",
+                "go.opentelemetry.io/otel/trace",
+                "go.opentelemetry.io/otel/trace/noop"
             ]
         }
     ]

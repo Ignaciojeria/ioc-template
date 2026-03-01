@@ -16,6 +16,8 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/go-fuego/fuego"
 	"github.com/go-fuego/fuego/option"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 var _ = ioc.Register(NewGcpSubscriber)
@@ -40,6 +42,15 @@ func (ps *GcpSubscriber) Start(subscriptionName string, processor MessageProcess
 		ctx := context.Background()
 		err := sub.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
 			ce := ps.convertPullMessage(subscriptionName, msg)
+
+			// Extract trace context from CloudEvent extensions
+			carrier := propagation.MapCarrier{}
+			for k, v := range ce.Extensions() {
+				if strVal, ok := v.(string); ok {
+					carrier[k] = strVal
+				}
+			}
+			ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
 
 			status := processor(ctx, ce)
 
@@ -130,7 +141,16 @@ func (ps *GcpSubscriber) handleNativePush(subName string, processor MessageProce
 		ce.SetID(envelope.Message.MessageID)
 	}
 
-	w.WriteHeader(processor(r.Context(), ce))
+	// Extract trace context
+	carrier := propagation.MapCarrier{}
+	for k, v := range ce.Extensions() {
+		if strVal, ok := v.(string); ok {
+			carrier[k] = strVal
+		}
+	}
+	ctx := otel.GetTextMapPropagator().Extract(r.Context(), carrier)
+
+	w.WriteHeader(processor(ctx, ce))
 }
 
 func (ps *GcpSubscriber) handleManualPush(subName string, processor MessageProcessor, w http.ResponseWriter, r *http.Request) {
@@ -153,5 +173,14 @@ func (ps *GcpSubscriber) handleManualPush(subName string, processor MessageProce
 		}
 	}
 
-	w.WriteHeader(processor(r.Context(), ce))
+	// Extract trace context
+	carrier := propagation.MapCarrier{}
+	for k, v := range ce.Extensions() {
+		if strVal, ok := v.(string); ok {
+			carrier[k] = strVal
+		}
+	}
+	ctx := otel.GetTextMapPropagator().Extract(r.Context(), carrier)
+
+	w.WriteHeader(processor(ctx, ce))
 }

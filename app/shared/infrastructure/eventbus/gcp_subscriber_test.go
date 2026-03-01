@@ -6,6 +6,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,10 +15,13 @@ import (
 
 	"archetype/app/shared/configuration"
 	"archetype/app/shared/infrastructure/httpserver"
+	"archetype/app/shared/infrastructure/httpserver/middleware"
+	"archetype/app/shared/infrastructure/observability"
 
 	"cloud.google.com/go/pubsub"
 	"cloud.google.com/go/pubsub/pstest"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
+	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -42,7 +47,15 @@ func TestGcpSubscriber_Start(t *testing.T) {
 		PROJECT_NAME: "test",
 		VERSION:      "v1",
 	}
-	srv, err := httpserver.NewServer(conf)
+
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	obs := observability.Observability{
+		Tracer: noop.NewTracerProvider().Tracer("test"),
+		Logger: logger,
+	}
+	mw := middleware.NewRequestLogger(obs)
+
+	srv, err := httpserver.NewServer(conf, mw)
 	if err != nil {
 		t.Fatalf("failed to create fake http server: %v", err)
 	}
