@@ -1,12 +1,36 @@
 package eventbus
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
 
 	"archetype/app/shared/configuration"
+
+	"cloud.google.com/go/pubsub/pstest"
 )
+
+func TestNewGcpClient_Success(t *testing.T) {
+	srv := pstest.NewServer()
+	defer srv.Close()
+
+	os.Setenv("PUBSUB_EMULATOR_HOST", srv.Addr)
+	defer os.Unsetenv("PUBSUB_EMULATOR_HOST")
+
+	conf := configuration.Conf{GOOGLE_PROJECT_ID: "test-project"}
+	client, err := NewGcpClient(conf)
+	if err != nil {
+		t.Fatalf("unexpected error creating client: %v", err)
+	}
+	defer client.Close()
+
+	ctx := context.Background()
+	_, err = client.CreateTopic(ctx, "test-topic")
+	if err != nil {
+		t.Fatalf("failed to create topic: %v", err)
+	}
+}
 
 func TestNewGcpClient_MissingProjectID(t *testing.T) {
 	conf := configuration.Conf{

@@ -20,6 +20,8 @@ import (
 var (
 	_ = ioc.Register(NewServer)
 	_ = ioc.RegisterAtEnd(StartServer)
+
+	shutdownTimeout = time.Second * 5
 )
 
 type Server struct {
@@ -55,7 +57,7 @@ func StartServer(s *Server) error {
 
 	go func() {
 		<-sigChan
-		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, time.Second*5)
+		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, shutdownTimeout)
 		defer shutdownCancel()
 
 		fmt.Println("Shutting down server gracefully...")
@@ -73,8 +75,13 @@ func StartServer(s *Server) error {
 	return nil
 }
 
+// healthNew is extractable for testing error paths.
+var healthNew = func(opts ...health.Option) (*health.Health, error) {
+	return health.New(opts...)
+}
+
 func (s *Server) healthCheck() error {
-	h, err := health.New(
+	h, err := healthNew(
 		health.WithComponent(health.Component{
 			Name:    s.conf.PROJECT_NAME,
 			Version: s.conf.VERSION,

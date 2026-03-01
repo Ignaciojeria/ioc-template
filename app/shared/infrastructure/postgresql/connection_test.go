@@ -18,7 +18,6 @@ import (
 func TestNewConnection_Success(t *testing.T) {
 	ctx := context.Background()
 
-	// Spin up a PostgreSQL test container
 	postgresContainer, err := postgres.Run(ctx,
 		"postgres:15-alpine",
 		postgres.WithDatabase("testdb"),
@@ -34,7 +33,6 @@ func TestNewConnection_Success(t *testing.T) {
 		t.Fatalf("failed to start postgres container: %s", err)
 	}
 
-	// Clean up the container
 	defer func() {
 		if err := postgresContainer.Terminate(ctx); err != nil {
 			t.Fatalf("failed to terminate container: %s", err)
@@ -50,15 +48,10 @@ func TestNewConnection_Success(t *testing.T) {
 		DATABASE_URL: connStr,
 	}
 
-	// For test purpose, point to dummy but valid FS migrations.
-	// Since migrations embed requires files to exist inside package dir,
-	// and they exist at `migrations/000001_initial_schema.up.sql`, this will auto-run them natively!
-
 	db, err := NewConnection(conf)
 	assert.NoError(t, err)
 	assert.NotNil(t, db)
 
-	// Validate DB ping
 	err = db.Ping()
 	assert.NoError(t, err)
 	db.Close()

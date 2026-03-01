@@ -118,16 +118,22 @@ func TestGcpPublisher_Publish(t *testing.T) {
 	// Test Full Event
 	_ = pub.Publish(ctx, PublishRequest{Topic: "test-topic", Event: FullEvent{}})
 
-	// Check if Full Event was received correctly
+	// Test Publish error - cancelled context causes Get() to fail
+	cancelledCtx, cancel := context.WithCancel(ctx)
+	cancel()
+	err = pub.Publish(cancelledCtx, PublishRequest{Topic: "test-topic", Event: DummyEvent{}})
+	if err == nil {
+		t.Error("expected error when context is cancelled")
+	}
+
+	// Check Full Event was received - find by ce-id
 	msgs = srv.Messages()
-	// msgs[1] is Minimal, msgs[2] is Full
-	if len(msgs) >= 3 {
-		msgFull := msgs[2]
-		if msgFull.Attributes["ce-id"] != "full-id" {
-			t.Errorf("Expected ce-id=full-id, got %s", msgFull.Attributes["ce-id"])
-		}
-		if msgFull.Attributes["ce-subject"] != "full.subject" {
-			t.Errorf("Expected ce-subject=full.subject, got %s", msgFull.Attributes["ce-subject"])
+	for _, m := range msgs {
+		if m.Attributes["ce-id"] == "full-id" {
+			if m.Attributes["ce-subject"] != "full.subject" {
+				t.Errorf("Expected ce-subject=full.subject, got %s", m.Attributes["ce-subject"])
+			}
+			break
 		}
 	}
 }

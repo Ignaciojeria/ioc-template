@@ -72,6 +72,14 @@ Scaffold standard components (these will be automatically wired into the IoC con
 
 The IoC container is designed to facilitate high unit test coverage. Since constructors explicitly define dependencies as parameters, you can easily instantiate them in tests by passing mocks or stubs directly.
 
+**Avoid extracting variables for testability:**
+Do **not** extract package-level variables (e.g. `var jsonMarshal = json.Marshal`) or replace standard library calls with injectable references solely to reach 100% coverage. This practice:
+- Introduces global mutable state that can be overridden in tests
+- Hides dependencies and pollutes production code
+- Is considered a code smell in idiomatic Go
+
+Prefer constructor injection or interfaces for dependency injection. Accept slightly lower coverage (e.g. 97–98%) for error paths that are practically unreachable rather than degrading code quality.
+
 **Integration Testing:**
 This template incorporates `testcontainers-go`. When running PostgreSQL tests, a real Docker container is automatically spun up to validate that:
 1. SQL migrations are applied correctly.
