@@ -11,14 +11,19 @@ import (
 
 var once sync.Once
 
+// handleEnvLoad logs the result of loading the .env file. Extracted for testability.
+func handleEnvLoad(err error) {
+	if err != nil {
+		slog.Warn(".env not found, loading environment variables from system.")
+	} else {
+		slog.Info("Environment variables loaded from .env file.")
+	}
+}
+
 // loadEnvOnce ensures that the .env file is only loaded once per application lifecycle.
 func loadEnvOnce() {
 	once.Do(func() {
-		if err := godotenv.Load(); err != nil {
-			slog.Warn(".env not found, loading environment variables from system.")
-		} else {
-			slog.Info("Environment variables loaded from .env file.")
-		}
+		handleEnvLoad(godotenv.Load())
 	})
 }
 
