@@ -131,3 +131,21 @@ func TestGcpPublisher_Publish(t *testing.T) {
 		}
 	}
 }
+
+func TestGcpPublisher_Publish_MarshalError(t *testing.T) {
+	orig := jsonMarshal
+	defer func() { jsonMarshal = orig }()
+
+	jsonMarshal = func(v any) ([]byte, error) {
+		return nil, context.Canceled
+	}
+
+	pub, _ := NewGcpPublisher(nil)
+	err := pub.Publish(context.Background(), PublishRequest{
+		Topic: "unused",
+		Event: DummyEvent{},
+	})
+	if err == nil {
+		t.Fatal("expected marshal error")
+	}
+}

@@ -10,11 +10,12 @@ import (
 )
 
 var once sync.Once
+var godotenvLoad = godotenv.Load
 
 // loadEnvOnce ensures that the .env file is only loaded once per application lifecycle.
 func loadEnvOnce() {
 	once.Do(func() {
-		if err := godotenv.Load(); err != nil {
+		if err := godotenvLoad(); err != nil {
 			slog.Warn(".env not found, loading environment variables from system.")
 		} else {
 			slog.Info("Environment variables loaded from .env file.")

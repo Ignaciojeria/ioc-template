@@ -11,6 +11,8 @@ import (
 
 var _ = ioc.Register(NewGcpPublisher)
 
+var jsonMarshal = json.Marshal
+
 type GcpPublisher struct {
 	client *pubsub.Client
 }
@@ -27,7 +29,7 @@ func (p *GcpPublisher) Publish(
 ) error {
 	ce := request.Event.ToCloudEvent()
 
-	bytes, err := json.Marshal(ce)
+	bytes, err := jsonMarshal(ce)
 	if err != nil {
 		return fmt.Errorf("cloudevent marshal error: %w", err)
 	}

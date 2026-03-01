@@ -13,6 +13,8 @@ import (
 
 var _ = ioc.Register(NewGcpClient)
 
+var pubsubNewClient = pubsub.NewClient
+
 // NewGcpClient creates a new GCP PubSub client using the configuration.
 func NewGcpClient(env configuration.Conf) (*pubsub.Client, error) {
 	if env.GOOGLE_PROJECT_ID == "" {
@@ -20,7 +22,7 @@ func NewGcpClient(env configuration.Conf) (*pubsub.Client, error) {
 	}
 
 	ctx := context.Background()
-	client, err := pubsub.NewClient(ctx, env.GOOGLE_PROJECT_ID)
+	client, err := pubsubNewClient(ctx, env.GOOGLE_PROJECT_ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pubsub client: %w", err)
 	}

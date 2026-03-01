@@ -3,6 +3,7 @@ package postgresql
 import (
 	"context"
 	"embed"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -16,6 +17,12 @@ import (
 )
 
 func TestNewConnection_Success(t *testing.T) {
+	if os.Getenv("DOCKER_HOST") == "" {
+		if _, err := os.Stat("/var/run/docker.sock"); err != nil {
+			t.Skip("docker not available in environment")
+		}
+	}
+
 	ctx := context.Background()
 
 	// Spin up a PostgreSQL test container

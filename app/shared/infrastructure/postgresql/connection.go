@@ -11,10 +11,58 @@ import (
 
 	"github.com/Ignaciojeria/ioc"
 	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	_ "github.com/jackc/pgx/v5/stdlib" // register pgx driver
 	"github.com/jmoiron/sqlx"
+)
+
+type migrationUp interface {
+	Up() error
+}
+
+var (
+	sqlxConnect              = sqlx.Connect
+	iofsNew                  = iofs.New
+	postgresWithInstance     = postgres.WithInstance
+	migrateNewWithInstanceFn = func(sourceName string, d source.Driver, databaseName string, driver database.Driver) (migrationUp, error) {
+		return migrate.NewWithInstance(sourceName, d, databaseName, driver)
+	}
+	internalRunMigrations = func(db *sqlx.DB, dbName string, fsys embed.FS) error {
+		if db == nil {
+			return fmt.Errorf("db connection is nil")
+		}
+		d, err := iofsNew(fsys, "migrations")
+		if err != nil {
+			return err
+		}
+
+		driver, err := postgresWithInstance(db.DB, &postgres.Config{
+			DatabaseName: dbName,
+		})
+		if err != nil {
+			return err
+		}
+
+		m, err := migrateNewWithInstanceFn(
+			"iofs",
+			d,
+			dbName,
+			driver,
+		)
+		if err != nil {
+			return err
+		}
+
+		if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+			return err
+		}
+
+		slog.Info("Database migrations validated/applied successfully")
+		return nil
+	}
 )
 
 var _ = ioc.Register(NewConnection)
@@ -32,7 +80,7 @@ func NewConnection(env configuration.Conf) (*sqlx.DB, error) {
 	}
 
 	// 1️⃣ Conectar con el driver nativo puro pgx
-	db, err := sqlx.Connect("pgx", dsn)
+	db, err := sqlxConnect("pgx", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to postgres: %w", err)
 	}
@@ -52,40 +100,6 @@ func NewConnection(env configuration.Conf) (*sqlx.DB, error) {
 	}
 
 	return db, nil
-}
-
-func internalRunMigrations(db *sqlx.DB, dbName string, fsys embed.FS) error {
-	if db == nil {
-		return fmt.Errorf("db connection is nil")
-	}
-	d, err := iofs.New(fsys, "migrations")
-	if err != nil {
-		return err
-	}
-
-	driver, err := postgres.WithInstance(db.DB, &postgres.Config{
-		DatabaseName: dbName,
-	})
-	if err != nil {
-		return err
-	}
-
-	m, err := migrate.NewWithInstance(
-		"iofs",
-		d,
-		dbName,
-		driver,
-	)
-	if err != nil {
-		return err
-	}
-
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		return err
-	}
-
-	slog.Info("Database migrations validated/applied successfully")
-	return nil
 }
 
 // Deprecated: use NewConnection which handles migrations internally.

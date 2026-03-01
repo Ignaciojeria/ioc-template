@@ -1,17 +1,19 @@
 package eventbus
 
 import (
-	"os"
+	"context"
+	"errors"
 	"strings"
 	"testing"
 
 	"archetype/app/shared/configuration"
+
+	"cloud.google.com/go/pubsub"
+	"google.golang.org/api/option"
 )
 
 func TestNewGcpClient_MissingProjectID(t *testing.T) {
-	conf := configuration.Conf{
-		GOOGLE_PROJECT_ID: "",
-	}
+	conf := configuration.Conf{GOOGLE_PROJECT_ID: ""}
 
 	client, err := NewGcpClient(conf)
 	if err == nil {
@@ -26,20 +28,34 @@ func TestNewGcpClient_MissingProjectID(t *testing.T) {
 	}
 }
 
-func TestNewGcpClient_FailureToConnect(t *testing.T) {
-	conf := configuration.Conf{
-		GOOGLE_PROJECT_ID: "test-project",
+func TestNewGcpClient_CreateClientError(t *testing.T) {
+	orig := pubsubNewClient
+	defer func() { pubsubNewClient = orig }()
+
+	pubsubNewClient = func(ctx context.Context, projectID string, opts ...option.ClientOption) (*pubsub.Client, error) {
+		return nil, errors.New("new client fail")
 	}
 
-	// This should fail to create client because credentials are not found and pubsub requires it
-	// unless running with option.WithoutAuthentication() which our client does not embed,
-	// or emulator env var. So setting a random PUBSUB_EMULATOR_HOST to an invalid address gives an error.
-	os.Setenv("PUBSUB_EMULATOR_HOST", "127.0.0.1:0")
-	defer os.Unsetenv("PUBSUB_EMULATOR_HOST")
+	_, err := NewGcpClient(configuration.Conf{GOOGLE_PROJECT_ID: "project"})
+	if err == nil {
+		t.Fatal("expected create client error")
+	}
+}
 
-	_, err := NewGcpClient(conf)
+func TestNewGcpClient_Success(t *testing.T) {
+	orig := pubsubNewClient
+	defer func() { pubsubNewClient = orig }()
+
+	dummy := &pubsub.Client{}
+	pubsubNewClient = func(ctx context.Context, projectID string, opts ...option.ClientOption) (*pubsub.Client, error) {
+		return dummy, nil
+	}
+
+	client, err := NewGcpClient(configuration.Conf{GOOGLE_PROJECT_ID: "project"})
 	if err != nil {
-		// NewClient succeeds synchronously even with fake emulator host
-		// if credentials are not checked immediately, but if it returns an err, we catch it.
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if client != dummy {
+		t.Fatal("expected mocked client instance")
 	}
 }

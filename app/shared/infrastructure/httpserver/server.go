@@ -20,6 +20,11 @@ import (
 var (
 	_ = ioc.Register(NewServer)
 	_ = ioc.RegisterAtEnd(StartServer)
+
+	healthNew    = health.New
+	serverRun    = func(s *fuego.Server) error { return s.Run() }
+	serverStop   = func(s *fuego.Server, ctx context.Context) error { return s.Shutdown(ctx) }
+	signalNotify = signal.Notify
 )
 
 type Server struct {
@@ -51,7 +56,7 @@ func StartServer(s *Server) error {
 	defer cancel()
 
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	signalNotify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 		<-sigChan
@@ -59,14 +64,14 @@ func StartServer(s *Server) error {
 		defer shutdownCancel()
 
 		fmt.Println("Shutting down server gracefully...")
-		if err := s.Manager.Shutdown(shutdownCtx); err != nil {
+		if err := serverStop(s.Manager, shutdownCtx); err != nil {
 			fmt.Printf("Shutdown error: %v\n", err)
 		}
 		cancel()
 	}()
 
 	fmt.Printf("Starting HTTP server on port %s\n", s.conf.PORT)
-	if err := s.Manager.Run(); err != nil && err != http.ErrServerClosed {
+	if err := serverRun(s.Manager); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("server failed to start: %w", err)
 	}
 
@@ -74,7 +79,7 @@ func StartServer(s *Server) error {
 }
 
 func (s *Server) healthCheck() error {
-	h, err := health.New(
+	h, err := healthNew(
 		health.WithComponent(health.Component{
 			Name:    s.conf.PROJECT_NAME,
 			Version: s.conf.VERSION,
