@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 
+	"archetype/app/application/ports/out"
 	"archetype/app/shared/infrastructure/eventbus"
 
 	"github.com/Ignaciojeria/ioc"
@@ -18,28 +19,28 @@ import (
 
 var _ = ioc.Register(NewTemplatePublisher)
 
-// DomainEventPublisher publishes domain events to the broker. Implemented by *TemplatePublisher.
-type DomainEventPublisher interface {
-	Publish(ctx context.Context, e eventbus.DomainEvent) error
-}
-
-type TemplatePublisher struct {
+type templatePublisher struct {
 	publisher eventbus.Publisher
 }
 
-func NewTemplatePublisher(publisher eventbus.Publisher) (DomainEventPublisher, error) {
+// NewTemplatePublisher returns an implementation of ports/out.DomainEventPublisher.
+func NewTemplatePublisher(publisher eventbus.Publisher) (out.DomainEventPublisher, error) {
 	if publisher == nil {
 		return nil, fmt.Errorf("publisher dependency is nil")
 	}
-	return &TemplatePublisher{
+	return &templatePublisher{
 		publisher: publisher,
 	}, nil
 }
 
-func (p *TemplatePublisher) Publish(ctx context.Context, e eventbus.DomainEvent) error {
+func (p *templatePublisher) Publish(ctx context.Context, e out.Event) error {
+	domainEvent, ok := e.(eventbus.DomainEvent)
+	if !ok {
+		return fmt.Errorf("event must implement eventbus.DomainEvent for CloudEvents serialization")
+	}
 	request := eventbus.PublishRequest{
 		Topic: "your-topic-name",
-		Event: e,
+		Event: domainEvent,
 	}
 	return p.publisher.Publish(ctx, request)
 }
@@ -76,9 +77,13 @@ func (m *MockPublisher) Publish(ctx context.Context, request eventbus.PublishReq
 	return m.PublishFunc(ctx, request)
 }
 
-// MockDomainEvent simulates a domain event
+// MockDomainEvent simulates a domain event (implements both ports/out.Event and eventbus.DomainEvent)
 type MockDomainEvent struct {
 	ID string
+}
+
+func (m MockDomainEvent) EventType() string {
+	return "mock.event"
 }
 
 func (m MockDomainEvent) ToCloudEvent() cloudevents.Event {

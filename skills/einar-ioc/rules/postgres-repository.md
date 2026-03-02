@@ -1,42 +1,42 @@
 # postgres-repository
 
-> PostgreSQL repository pattern with sqlx and go-sqlmock
+> PostgreSQL adapter - implements ports/out.TemplateRepository
 
-## app/adapter/out/postgres/postgres_repository.go
+## app/adapter/out/postgres/template_repository.go
 
 ```go
 package postgres
 
 import (
+	"context"
+
+	"archetype/app/application/ports/out"
+	"archetype/app/domain/entity"
+
 	"github.com/Ignaciojeria/ioc"
 	"github.com/jmoiron/sqlx"
 )
 
 var _ = ioc.Register(NewTemplateRepository)
 
-// TemplateStructRepository fetches TemplateStruct by ID. Implemented by *TemplateRepository.
-type TemplateStructRepository interface {
-	FindById(id string) (TemplateStruct, error)
-}
-
-type TemplateStruct struct {
-	ID string `db:"id"`
-}
-
-type TemplateRepository struct {
+type templateRepository struct {
 	db *sqlx.DB
 }
 
-func NewTemplateRepository(db *sqlx.DB) (TemplateStructRepository, error) {
-	return &TemplateRepository{db: db}, nil
+// NewTemplateRepository returns an implementation of ports/out.TemplateRepository.
+func NewTemplateRepository(db *sqlx.DB) (out.TemplateRepository, error) {
+	return &templateRepository{db: db}, nil
 }
 
-// FindById fetches a TemplateStruct by its ID.
-func (r *TemplateRepository) FindById(id string) (TemplateStruct, error) {
-	var dest TemplateStruct
-	// sqlx allows mapping raw queries into structs easily using db tags.
-	err := r.db.Get(&dest, "SELECT * FROM template_table WHERE id = $1 LIMIT 1", id)
-	return dest, err
+func (r *templateRepository) FindByID(ctx context.Context, id string) (*entity.Template, error) {
+	var dest struct {
+		ID string `db:"id"`
+	}
+	err := r.db.GetContext(ctx, &dest, "SELECT id FROM template_table WHERE id = $1 LIMIT 1", id)
+	if err != nil {
+		return nil, err
+	}
+	return &entity.Template{ID: dest.ID}, nil
 }
 ```
 
@@ -46,12 +46,13 @@ func (r *TemplateRepository) FindById(id string) (TemplateStruct, error) {
 
 When creating a new component, generate tests following this pattern:
 
-### app/adapter/out/postgres/postgres_repository_test.go
+### app/adapter/out/postgres/template_repository_test.go
 
 ```go
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"testing"
 
@@ -69,27 +70,23 @@ func TestNewTemplateRepository(t *testing.T) {
 	}
 }
 
-func TestTemplateRepository_FindById(t *testing.T) {
-	// Create a mock DB
+func TestTemplateRepository_FindByID(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("failed to open stub database connection: %v", err)
 	}
 	defer db.Close()
 
-	// Wrap the sql.DB into sqlx.DB
 	sqlxDB := sqlx.NewDb(db, "postgres")
-
-	// Create repository instance
 	repo, _ := NewTemplateRepository(sqlxDB)
+	ctx := context.Background()
 
-	// Subtest 1: Successful fetch
 	t.Run("Success", func(t *testing.T) {
-		mock.ExpectQuery("SELECT \\* FROM template_table WHERE id = \\$1 LIMIT 1").
+		mock.ExpectQuery("SELECT id FROM template_table WHERE id = \\$1 LIMIT 1").
 			WithArgs("123").
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("123"))
 
-		result, err := repo.FindById("123")
+		result, err := repo.FindByID(ctx, "123")
 		if err != nil {
 			t.Errorf("expected no error, got %v", err)
 		}
@@ -98,13 +95,12 @@ func TestTemplateRepository_FindById(t *testing.T) {
 		}
 	})
 
-	// Subtest 2: Fetching fails
 	t.Run("NotFound", func(t *testing.T) {
-		mock.ExpectQuery("SELECT \\* FROM template_table WHERE id = \\$1 LIMIT 1").
+		mock.ExpectQuery("SELECT id FROM template_table WHERE id = \\$1 LIMIT 1").
 			WithArgs("999").
 			WillReturnError(sql.ErrNoRows)
 
-		_, err := repo.FindById("999")
+		_, err := repo.FindByID(ctx, "999")
 		if err == nil {
 			t.Error("expected error sql.ErrNoRows, got nil")
 		}

@@ -20,9 +20,13 @@ func (m *MockPublisher) Publish(ctx context.Context, request eventbus.PublishReq
 	return m.PublishFunc(ctx, request)
 }
 
-// MockDomainEvent simulates a domain event
+// MockDomainEvent simulates a domain event (implements both ports/out.Event and eventbus.DomainEvent)
 type MockDomainEvent struct {
 	ID string
+}
+
+func (m MockDomainEvent) EventType() string {
+	return "mock.event"
 }
 
 func (m MockDomainEvent) ToCloudEvent() cloudevents.Event {

@@ -34,11 +34,20 @@
 │   │       │   ├── publisher.go
 │   │       │   └── publisher_test.go
 │   │       └── postgres
-│   │           ├── postgres_repository.go
-│   │           └── postgres_repository_test.go
+│   │           ├── template_repository.go
+│   │           └── template_repository_test.go
 │   ├── application
+│   │   ├── ports
+│   │   │   ├── in
+│   │   │   │   └── get_template.go
+│   │   │   └── out
+│   │   │       ├── event_publisher.go
+│   │   │       └── template_repository.go
 │   │   └── usecase
-│   │       └── interfaces.go
+│   │       └── get_template.go
+│   ├── domain
+│   │   └── entity
+│   │       └── template.go
 │   └── shared
 │       ├── configuration
 │       │   ├── conf.go
@@ -89,84 +98,5 @@
 ├── go.sum
 ├── scripts
 │   └── gen-skills.config.yaml
-├── template-generada
-│   ├── .environment
-│   ├── .gitignore
-│   ├── .version
-│   ├── app
-│   │   ├── adapter
-│   │   │   ├── in
-│   │   │   │   └── fuegoapi
-│   │   │   │       ├── get_account.go
-│   │   │   │       ├── get_account_ledger.go
-│   │   │   │       ├── get_account_ledger_test.go
-│   │   │   │       ├── get_account_test.go
-│   │   │   │       ├── get_transaction.go
-│   │   │   │       ├── get_transaction_test.go
-│   │   │   │       ├── post_account.go
-│   │   │   │       ├── post_account_test.go
-│   │   │   │       ├── post_transaction.go
-│   │   │   │       └── post_transaction_test.go
-│   │   │   └── out
-│   │   │       └── postgres
-│   │   │           ├── account_repository.go
-│   │   │           ├── idempotency_store.go
-│   │   │           ├── ledger_entry_repository.go
-│   │   │           ├── transaction_executor.go
-│   │   │           └── transaction_repository.go
-│   │   ├── application
-│   │   │   └── usecase
-│   │   │       ├── create_account.go
-│   │   │       ├── create_transaction.go
-│   │   │       ├── get_account.go
-│   │   │       ├── get_account_ledger.go
-│   │   │       └── get_transaction.go
-│   │   ├── domain
-│   │   │   ├── entity
-│   │   │   │   ├── account.go
-│   │   │   │   ├── idempotency.go
-│   │   │   │   ├── ledger_entry.go
-│   │   │   │   └── transaction.go
-│   │   │   ├── errors
-│   │   │   │   └── errors.go
-│   │   │   └── port
-│   │   │       ├── account_repository.go
-│   │   │       ├── idempotency_store.go
-│   │   │       ├── ledger_entry_repository.go
-│   │   │       ├── transaction_executor.go
-│   │   │       └── transaction_repository.go
-│   │   └── shared
-│   │       ├── configuration
-│   │       │   ├── conf.go
-│   │       │   ├── conf_test.go
-│   │       │   ├── parse.go
-│   │       │   └── parse_test.go
-│   │       └── infrastructure
-│   │           ├── httpserver
-│   │           │   ├── doc
-│   │           │   │   └── openapi.json
-│   │           │   ├── middleware
-│   │           │   │   ├── request_logger.go
-│   │           │   │   └── request_logger_test.go
-│   │           │   ├── server.go
-│   │           │   └── server_test.go
-│   │           ├── observability
-│   │           │   ├── observability.go
-│   │           │   └── observability_test.go
-│   │           └── postgresql
-│   │               ├── connection.go
-│   │               └── migrations
-│   │                   ├── 000001_initial_schema.down.sql
-│   │                   ├── 000001_initial_schema.up.sql
-│   │                   ├── 000002_ledger_schema.down.sql
-│   │                   └── 000002_ledger_schema.up.sql
-│   ├── cmd
-│   │   └── api
-│   │       └── main.go
-│   ├── docker-compose.yml
-│   ├── go.mod
-│   ├── go.sum
-│   ├── skills-lock.json
-│   └── version.go
 └── version.go
 ```

@@ -1,10 +1,3 @@
-# usecase
-
-> Use case implementation - imports ports/out, returns ports/in executor
-
-## app/application/usecase/get_template.go
-
-```go
 package usecase
 
 import (
@@ -33,4 +26,3 @@ func (uc *getTemplateUseCase) Execute(ctx context.Context, id string) (in.GetTem
 	}
 	return in.GetTemplateOutput{ID: t.ID}, nil
 }
-```

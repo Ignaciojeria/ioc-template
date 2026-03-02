@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"testing"
 
@@ -18,27 +19,23 @@ func TestNewTemplateRepository(t *testing.T) {
 	}
 }
 
-func TestTemplateRepository_FindById(t *testing.T) {
-	// Create a mock DB
+func TestTemplateRepository_FindByID(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("failed to open stub database connection: %v", err)
 	}
 	defer db.Close()
 
-	// Wrap the sql.DB into sqlx.DB
 	sqlxDB := sqlx.NewDb(db, "postgres")
-
-	// Create repository instance
 	repo, _ := NewTemplateRepository(sqlxDB)
+	ctx := context.Background()
 
-	// Subtest 1: Successful fetch
 	t.Run("Success", func(t *testing.T) {
-		mock.ExpectQuery("SELECT \\* FROM template_table WHERE id = \\$1 LIMIT 1").
+		mock.ExpectQuery("SELECT id FROM template_table WHERE id = \\$1 LIMIT 1").
 			WithArgs("123").
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("123"))
 
-		result, err := repo.FindById("123")
+		result, err := repo.FindByID(ctx, "123")
 		if err != nil {
 			t.Errorf("expected no error, got %v", err)
 		}
@@ -47,13 +44,12 @@ func TestTemplateRepository_FindById(t *testing.T) {
 		}
 	})
 
-	// Subtest 2: Fetching fails
 	t.Run("NotFound", func(t *testing.T) {
-		mock.ExpectQuery("SELECT \\* FROM template_table WHERE id = \\$1 LIMIT 1").
+		mock.ExpectQuery("SELECT id FROM template_table WHERE id = \\$1 LIMIT 1").
 			WithArgs("999").
 			WillReturnError(sql.ErrNoRows)
 
-		_, err := repo.FindById("999")
+		_, err := repo.FindByID(ctx, "999")
 		if err == nil {
 			t.Error("expected error sql.ErrNoRows, got nil")
 		}

@@ -20,13 +20,13 @@ Use this skill whenever you are writing or modifying Go code that uses the `gith
 
 | Domain           | Rule files |
 |------------------|------------|
-| Architecture     | [architecture-guidelines](rules/architecture-guidelines.md) – interfaces, no ports folder, inject interfaces (one impl per interface) |
+| Architecture     | [architecture-guidelines](rules/architecture-guidelines.md), [domain](rules/domain.md) – domain by intention (entity, repository, client, service) |
 | Einar CLI config | [einar-template](rules/einar-template.md) – template config for generators |
 | Structure & main | [structure](rules/structure.md), [main](rules/main.md), [archetype-version](rules/archetype-version.md) |
 | Configuration    | [configuration](rules/configuration.md) |
 | HTTP / REST      | [httpserver](rules/httpserver.md), [request-logger-middleware](rules/request-logger-middleware.md), [fuegoapi-controllers](rules/fuegoapi-controllers.md) |
 | EventBus         | [eventbus-strategy](rules/eventbus-strategy.md), [eventbus-gcp](rules/eventbus-gcp.md), [eventbus-nats](rules/eventbus-nats.md), [consumer](rules/consumer.md), [publisher](rules/publisher.md) |
-| Use cases        | [usecase](rules/usecase.md), [architecture-guidelines](rules/architecture-guidelines.md) – interface, constructor, DTOs; one impl per interface |
+| Use cases        | [usecase](rules/usecase.md), [ports](rules/ports.md), [architecture-guidelines](rules/architecture-guidelines.md) |
 | Database         | [postgresql-connection](rules/postgresql-connection.md), [postgresql-migrations](rules/postgresql-migrations.md), [postgres-repository](rules/postgres-repository.md) |
 | Observability    | [observability](rules/observability.md) |
 
@@ -88,11 +88,11 @@ Einar CLI **generates and renames** `.go` files guided by [.einar.template.json]
 
 ### Example: injecting a use case into a controller
 
-The controller injects the **interface** (`usecase.TemplateExecutor`). The IoC resolves it because `NewTemplateUseCase` is the only producer of that interface:
+The controller injects the **input port** (`in.GetTemplateExecutor`). The IoC resolves it from `NewGetTemplateUseCase`:
 
 ```go
-// Controller: inject the interface returned by the use case constructor
-func NewGetTemplate(s *httpserver.Server, uc usecase.TemplateExecutor) {
+// Controller: inject ports/in executor
+func NewGetTemplate(s *httpserver.Server, uc in.GetTemplateExecutor) {
 	fuegofw.Get(s.Manager, "/templates/{id}",
 		func(c fuegofw.ContextNoBody) (GetTemplateResponse, error) {
 			out, err := uc.Execute(c.Context(), c.PathParam("id"))
@@ -105,7 +105,7 @@ func NewGetTemplate(s *httpserver.Server, uc usecase.TemplateExecutor) {
 }
 ```
 
-The use case constructor returns `(TemplateExecutor, error)`; the IoC stores that value and injects it into the controller.
+The use case constructor returns `(in.GetTemplateExecutor, error)`; the IoC stores that value and injects it into the controller.
 
 ## Use case output: DTOs over domain entities
 

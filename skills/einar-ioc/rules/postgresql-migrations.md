@@ -12,6 +12,10 @@ CREATE TABLE IF NOT EXISTS sample_table (
     name VARCHAR(100) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS template_table (
+    id VARCHAR(36) PRIMARY KEY
+);
 ```
 
 ---
@@ -20,4 +24,5 @@ CREATE TABLE IF NOT EXISTS sample_table (
 
 ```sql
 DROP TABLE IF EXISTS "sample_table";
+DROP TABLE IF EXISTS "template_table";
 ```

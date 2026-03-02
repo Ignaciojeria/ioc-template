@@ -139,14 +139,26 @@ outputs:
       - app/adapter/in/fuegoapi/patch_test.go
       - app/adapter/in/fuegoapi/delete_test.go
 
-  - md: postgres-repository.md
-    description: "PostgreSQL repository pattern with sqlx and go-sqlmock"
+  - md: domain.md
+    description: "Domain entities only"
     sources:
-      - app/adapter/out/postgres/postgres_repository.go
+      - app/domain/entity/template.go
+
+  - md: ports.md
+    description: "Hexagonal ports - in (executors) and out (repositories, publishers)"
+    sources:
+      - app/application/ports/in/get_template.go
+      - app/application/ports/out/template_repository.go
+      - app/application/ports/out/event_publisher.go
+
+  - md: postgres-repository.md
+    description: "PostgreSQL adapter - implements ports/out.TemplateRepository"
+    sources:
+      - app/adapter/out/postgres/template_repository.go
     test_sources:
-      - app/adapter/out/postgres/postgres_repository_test.go
+      - app/adapter/out/postgres/template_repository_test.go
 
   - md: usecase.md
-    description: "Use case pattern - interface, constructor, DTOs; one implementation per interface"
+    description: "Use case implementation - imports ports/out, returns ports/in executor"
     sources:
-      - app/application/usecase/interfaces.go
+      - app/application/usecase/get_template.go
