@@ -2,6 +2,8 @@
 
 > Environment configuration with caarlos0/env and godotenv
 
+**.environment → .env:** The template ships `.environment` as an example. The app loads `.env` only. Tell the user to rename or copy: `cp .environment .env`. If config is not loading, check they have `.env` in the project root.
+
 ## app/shared/configuration/conf.go
 
 ```go

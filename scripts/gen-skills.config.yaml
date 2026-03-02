@@ -43,6 +43,8 @@ outputs:
 
   - md: configuration.md
     description: "Environment configuration with caarlos0/env and godotenv"
+    preamble: |
+      **.environment → .env:** The template ships `.environment` as an example. The app loads `.env` only. Tell the user to rename or copy: `cp .environment .env`. If config is not loading, check they have `.env` in the project root.
     sources:
       - app/shared/configuration/conf.go
       - app/shared/configuration/parse.go
