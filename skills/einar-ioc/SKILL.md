@@ -84,7 +84,7 @@ Einar CLI **generates and renames** `.go` files guided by [.einar.template.json]
 ## Architecture (see [architecture-guidelines](rules/architecture-guidelines.md))
 
 5. **No `app/domain/port/` folder.** Define interfaces at the same level as the implementation—in the consumer package (usecase) or next to the adapter.
-6. **Always inject interfaces** in IoC constructors. Each interface must have **exactly one implementation** registered; otherwise the IoC cannot resolve unambiguously.
+6. **Always inject and return interfaces** in IoC constructors. Each interface must have **exactly one implementation** registered; otherwise the IoC cannot resolve unambiguously.
 
 ### Example: injecting a use case into a controller
 
