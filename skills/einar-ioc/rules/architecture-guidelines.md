@@ -151,6 +151,25 @@ The controller receives HTTP/event data and calls the use case with a DTO (`XxxI
 
 **Prefer use case-specific DTOs** (`XxxInput`, `XxxOutput`) in the port. Protects the API; if the domain changes, external JSON stays stable.
 
+## Idempotency key: header + context, never body
+
+For requests that need idempotency (e.g. create payment, create order):
+
+- **Put the key in the HTTP header** `Idempotency-Key` (or `X-Idempotency-Key`). Industry standard; keeps operational concerns out of the body.
+- **Propagate via context.** Middleware extracts the header and stores it in `context.Context`. Use cases and adapters that need it (e.g. repository to check for duplicates) read from context. Keeps port signatures clean.
+- **Do not put it in the request body.** Idempotency is a transport/operational concern, not domain data. Mixing it with the body pollutes DTOs and forces every idempotent use case to receive it as input.
+
+```go
+// Middleware extracts and injects
+ctx = context.WithValue(ctx, idempotencyKeyCtxKey, r.Header.Get("Idempotency-Key"))
+
+// Repository reads from context when needed
+key, _ := ctx.Value(idempotencyKeyCtxKey).(string)
+if key != "" {
+    if exists := r.checkDuplicate(ctx, key); exists { return cached, nil }
+}
+```
+
 ## Summary
 
 | Avoid | Use |
@@ -161,6 +180,7 @@ The controller receives HTTP/event data and calls the use case with a DTO (`XxxI
 | Injecting concrete types | Always inject and return interfaces |
 | One interface with N implementations | One implementation per interface; use factory if needed |
 | Returning domain entities from use cases | DTOs in the port (`XxxOutput`) |
+| Idempotency key in body | Header `Idempotency-Key` + propagate via context |
 
 ---
 
@@ -174,3 +194,4 @@ The controller receives HTTP/event data and calls the use case with a DTO (`XxxI
 | One implementation per interface | Keeps einar-ioc predictable and startup deterministic. |
 | Domain = entities only | Domain stays pure. No infrastructure knowledge. |
 | Mappers inside adapter | Local model + `toDomain`/`fromDomain`; no global mappers folder. |
+| Idempotency key in body | Header + context. Operational concern, not domain. |
