@@ -31,6 +31,7 @@ outputs:
           _ "archetype/app/adapter/in/fuegoapi"
           _ "archetype/app/adapter/in/eventbus"
           _ "archetype/app/adapter/out/postgres"
+          _ "archetype/app/application/usecase"
           _ "archetype/app/shared/infrastructure/httpserver"
           _ "archetype/app/shared/infrastructure/postgresql"
           _ "archetype/app/shared/infrastructure/observability"
@@ -144,3 +145,8 @@ outputs:
       - app/adapter/out/postgres/postgres_repository.go
     test_sources:
       - app/adapter/out/postgres/postgres_repository_test.go
+
+  - md: usecase.md
+    description: "Use case pattern - interface, constructor, DTOs; one implementation per interface"
+    sources:
+      - app/application/usecase/interfaces.go

@@ -11,11 +11,16 @@ import (
 
 var _ = ioc.Register(NewTemplatePublisher)
 
+// DomainEventPublisher publishes domain events to the broker. Implemented by *TemplatePublisher.
+type DomainEventPublisher interface {
+	Publish(ctx context.Context, e eventbus.DomainEvent) error
+}
+
 type TemplatePublisher struct {
 	publisher eventbus.Publisher
 }
 
-func NewTemplatePublisher(publisher eventbus.Publisher) (*TemplatePublisher, error) {
+func NewTemplatePublisher(publisher eventbus.Publisher) (DomainEventPublisher, error) {
 	if publisher == nil {
 		return nil, fmt.Errorf("publisher dependency is nil")
 	}

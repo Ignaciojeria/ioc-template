@@ -13,6 +13,7 @@ import (
     _ "archetype/app/adapter/in/fuegoapi"
     _ "archetype/app/adapter/in/eventbus"
     _ "archetype/app/adapter/out/postgres"
+    _ "archetype/app/application/usecase"
     _ "archetype/app/shared/infrastructure/httpserver"
     _ "archetype/app/shared/infrastructure/postgresql"
     _ "archetype/app/shared/infrastructure/observability"

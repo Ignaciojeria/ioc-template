@@ -20,11 +20,13 @@ Use this skill whenever you are writing or modifying Go code that uses the `gith
 
 | Domain           | Rule files |
 |------------------|------------|
+| Architecture     | [architecture-guidelines](rules/architecture-guidelines.md) – interfaces, no ports folder, inject interfaces (one impl per interface) |
 | Einar CLI config | [einar-template](rules/einar-template.md) – template config for generators |
 | Structure & main | [structure](rules/structure.md), [main](rules/main.md), [archetype-version](rules/archetype-version.md) |
 | Configuration    | [configuration](rules/configuration.md) |
 | HTTP / REST      | [httpserver](rules/httpserver.md), [request-logger-middleware](rules/request-logger-middleware.md), [fuegoapi-controllers](rules/fuegoapi-controllers.md) |
 | EventBus         | [eventbus-strategy](rules/eventbus-strategy.md), [eventbus-gcp](rules/eventbus-gcp.md), [eventbus-nats](rules/eventbus-nats.md), [consumer](rules/consumer.md), [publisher](rules/publisher.md) |
+| Use cases        | [usecase](rules/usecase.md), [architecture-guidelines](rules/architecture-guidelines.md) – interface, constructor, DTOs; one impl per interface |
 | Database         | [postgresql-connection](rules/postgresql-connection.md), [postgresql-migrations](rules/postgresql-migrations.md), [postgres-repository](rules/postgres-repository.md) |
 | Observability    | [observability](rules/observability.md) |
 
@@ -79,7 +81,44 @@ Einar CLI **generates and renames** `.go` files guided by [.einar.template.json]
 3. **No ORMs with auto-migrations.** Schema changes go in `.sql` files under `app/shared/infrastructure/postgresql/migrations/`. Use `sqlx` + `golang-migrate`.
 4. **Don't extract variables for testability.** Avoid `var jsonMarshal = json.Marshal` or injectable stubs just to reach 100% coverage. Prefer constructor injection; accept slightly lower coverage for unreachable error paths.
 
+## Architecture (see [architecture-guidelines](rules/architecture-guidelines.md))
+
+5. **No `app/domain/port/` folder.** Define interfaces at the same level as the implementation—in the consumer package (usecase) or next to the adapter.
+6. **Always inject interfaces** in IoC constructors. Each interface must have **exactly one implementation** registered; otherwise the IoC cannot resolve unambiguously.
+
+### Example: injecting a use case into a controller
+
+The controller injects the **interface** (`usecase.TemplateExecutor`). The IoC resolves it because `NewTemplateUseCase` is the only producer of that interface:
+
+```go
+// Controller: inject the interface returned by the use case constructor
+func NewGetTemplate(s *httpserver.Server, uc usecase.TemplateExecutor) {
+	fuegofw.Get(s.Manager, "/templates/{id}",
+		func(c fuegofw.ContextNoBody) (GetTemplateResponse, error) {
+			out, err := uc.Execute(c.Context(), c.PathParam("id"))
+			if err != nil {
+				// handle error...
+			}
+			return GetTemplateResponse{ID: out.ID, Name: out.Name}, nil
+		},
+	)
+}
+```
+
+The use case constructor returns `(TemplateExecutor, error)`; the IoC stores that value and injects it into the controller.
+
+## Use case output: DTOs over domain entities
+
+**Prefer use case-specific DTOs** (`XxxInput`, `XxxOutput`) over returning domain entities. Reasons:
+- **Decoupling:** The API contract stays independent of the domain model.
+- **Explicit contracts:** Each use case exposes only the fields it needs.
+- **Agent-friendly:** DTOs allow self-contained use case files with predictable patterns; agents can generate complete use cases without cross-package lookups.
+
 ## Rules by domain
+
+### Architecture
+
+- [architecture-guidelines](rules/architecture-guidelines.md) – No ports folder, interfaces co-located, inject interfaces (one implementation per interface)
 
 ### Einar CLI / generators
 

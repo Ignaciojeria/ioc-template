@@ -14,6 +14,11 @@ import (
 
 var _ = ioc.Register(NewTemplateRepository)
 
+// TemplateStructRepository fetches TemplateStruct by ID. Implemented by *TemplateRepository.
+type TemplateStructRepository interface {
+	FindById(id string) (TemplateStruct, error)
+}
+
 type TemplateStruct struct {
 	ID string `db:"id"`
 }
@@ -22,7 +27,7 @@ type TemplateRepository struct {
 	db *sqlx.DB
 }
 
-func NewTemplateRepository(db *sqlx.DB) (*TemplateRepository, error) {
+func NewTemplateRepository(db *sqlx.DB) (TemplateStructRepository, error) {
 	return &TemplateRepository{db: db}, nil
 }
 
