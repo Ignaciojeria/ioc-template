@@ -3,6 +3,8 @@ package configuration
 import (
 	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/caarlos0/env/v11"
@@ -11,7 +13,6 @@ import (
 
 var once sync.Once
 
-// handleEnvLoad logs the result of loading the .env file. Extracted for testability.
 func handleEnvLoad(err error) {
 	if err != nil {
 		slog.Warn(".env not found, loading environment variables from system.")
@@ -20,15 +21,29 @@ func handleEnvLoad(err error) {
 	}
 }
 
-// loadEnvOnce ensures that the .env file is only loaded once per application lifecycle.
+func findProjectRoot() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+	dir := wd
+	for dir != filepath.Dir(dir) {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir
+		}
+		dir = filepath.Dir(dir)
+	}
+	return wd
+}
+
 func loadEnvOnce() {
 	once.Do(func() {
-		handleEnvLoad(godotenv.Load())
+		root := findProjectRoot()
+		envPath := filepath.Join(root, ".env")
+		handleEnvLoad(godotenv.Load(envPath))
 	})
 }
 
-// Parse loads the .env file (if present) and parses the environment variables into the generic struct T.
-// Struct T can use `env:"VAR_NAME"` and `envDefault:"default_value"` tags.
 func Parse[T any]() (T, error) {
 	loadEnvOnce()
 	var conf T
