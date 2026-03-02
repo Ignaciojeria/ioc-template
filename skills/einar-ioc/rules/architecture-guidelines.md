@@ -151,6 +151,26 @@ The controller receives HTTP/event data and calls the use case with a DTO (`XxxI
 
 **Prefer use case-specific DTOs** (`XxxInput`, `XxxOutput`) in the port. Protects the API; if the domain changes, external JSON stays stable.
 
+## Error handling: adapters map, use cases never see infra errors
+
+Adapters must map technical errors (e.g. `sql.ErrNoRows`, driver errors) to domain or port-defined errors before returning to the use case. The use case must not know what `ErrNoRows` is.
+
+- **Define errors in `ports`** or a shared `errors` package. e.g. `ErrNotFound`, `ErrConflict`.
+- **Adapter responsibility:** catch infra errors and return the mapped equivalent.
+- **Use case:** receives only domain-level errors. Can branch on `errors.Is(err, ErrNotFound)` without importing `database/sql`.
+
+```go
+// adapter/out/postgres - maps sql.ErrNoRows
+if errors.Is(err, sql.ErrNoRows) {
+    return nil, ports.ErrNotFound
+}
+
+// usecase - never imports sql
+if errors.Is(err, out.ErrNotFound) {
+    return in.GetTemplateOutput{}, nil // or propagate
+}
+```
+
 ## Idempotency key: header + context, never body
 
 For requests that need idempotency (e.g. create payment, create order):
@@ -181,6 +201,7 @@ if key != "" {
 | One interface with N implementations | One implementation per interface; use factory if needed |
 | Returning domain entities from use cases | DTOs in the port (`XxxOutput`) |
 | Idempotency key in body | Header `Idempotency-Key` + propagate via context |
+| Use case handling sql.ErrNoRows or driver errors | Adapter maps to port/domain errors (e.g. ErrNotFound) |
 
 ---
 
@@ -195,3 +216,4 @@ if key != "" {
 | Domain = entities only | Domain stays pure. No infrastructure knowledge. |
 | Mappers inside adapter | Local model + `toDomain`/`fromDomain`; no global mappers folder. |
 | Idempotency key in body | Header + context. Operational concern, not domain. |
+| Errors: adapter maps infra → domain | Use case never imports sql or driver packages. |
